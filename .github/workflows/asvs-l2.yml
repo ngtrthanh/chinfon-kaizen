@@ -1,9 +1,12 @@
 name: Kaizen ASVS L2 assurance
 on:
   push:
-    branches: [main, 'security/**']
+    branches: [main]
   pull_request:
   workflow_dispatch:
+concurrency:
+  group: kaizen-asvs-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
