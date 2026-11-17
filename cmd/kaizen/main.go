@@ -33,6 +33,20 @@ func main() {
 		Logger:       logger,
 	}
 
+	if len(os.Args) > 1 && os.Args[1] == "issue-invite" {
+		if len(os.Args) != 3 {
+			fmt.Fprintln(os.Stderr, "usage: kaizen issue-invite <username>")
+			os.Exit(2)
+		}
+		cfg.SeedDemo = false
+		application, err := app.New(cfg)
+		if err != nil { logger.Fatal(err) }
+		defer application.Close()
+		token, err := application.IssueInvite(os.Args[2])
+		if err != nil { logger.Fatal(err) }
+		fmt.Printf("One-time bootstrap credential for %s (30 min, keep private): %s\n", os.Args[2], token)
+		return
+	}
 	if len(os.Args) > 1 && os.Args[1] == "reset-mfa" {
 		if len(os.Args) < 3 {
 			fmt.Fprintln(os.Stderr, "usage: kaizen reset-mfa <username>")

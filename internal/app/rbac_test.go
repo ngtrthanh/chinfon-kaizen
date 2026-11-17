@@ -151,3 +151,10 @@ func TestVisibilityClause(t *testing.T) {
 		t.Fatal("participant shortcut must not bypass demo-mode hiding")
 	}
 }
+
+func TestEmptyScopeFailsClosed(t *testing.T) {
+	user := testUser("CF-0099", "", RoleManager)
+	if user.ScopeAll() { t.Fatal("empty scope must not grant ALL") }
+	record := &Initiative{SubmitterEmployeeNo: "CF-1000", DepartmentCode: "KILN"}
+	if user.CanView(record) { t.Fatal("empty scope leaked other employee record") }
+}

@@ -33,7 +33,7 @@ func (u *User) BroadVisibility() bool {
 }
 
 func (u *User) ScopeAll() bool {
-	return strings.EqualFold(u.Scope, "ALL") || strings.TrimSpace(u.Scope) == ""
+	return strings.EqualFold(strings.TrimSpace(u.Scope), "ALL")
 }
 
 // CanView enforces the cem-auth scope guard. Confidential records have a
