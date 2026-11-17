@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -23,6 +24,14 @@ func main() {
 	dbPath := env("APP_DB", filepath.Join(dataDir, "kaizen.db"))
 	uploadDir := env("APP_UPLOAD_DIR", filepath.Join(dataDir, "uploads"))
 	cookieSecure := envBool("COOKIE_SECURE")
+	// A shared interface is not permitted with plaintext HTTP session cookies.
+	// Put a reverse proxy with TLS in front of a loopback-bound app.
+	host, _, splitErr := net.SplitHostPort(addr)
+	if splitErr != nil { logger.Fatal(splitErr) }
+	ip := net.ParseIP(host)
+	if !cookieSecure && host != "localhost" && (ip == nil || !ip.IsLoopback()) {
+		logger.Fatal("non-loopback binding requires COOKIE_SECURE=true and HTTPS at a trusted reverse proxy; do not expose plain HTTP")
+	}
 	seedDemo := envBoolDefault("APP_SEED_DEMO", false)
 
 	cfg := app.Config{

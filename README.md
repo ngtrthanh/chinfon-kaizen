@@ -7,6 +7,8 @@ Bản mới của ứng dụng sáng kiến & khen thưởng, xây dựng lại 
 
 v3 là một ứng dụng Go **single binary**, không Node.js, không build frontend, không CDN. Toàn bộ template/CSS/JS/migration được nhúng vào file thực thi.
 
+> **ASVS 5.0 L2 implementation in progress:** see [security/asvs/README.md](security/asvs/README.md). This branch is NOT an ASVS-compliant release. Phone-derived PIN bootstrap is disabled; use `kaizen issue-invite <username>` from the server console after importing staff. The token expires in 30 minutes. Existing pending accounts require provisioning. Internet/LAN access requires an HTTPS reverse proxy and secure cookies. Old `start-lan.cmd` direct HTTP access is disabled.
+
 ## 1. Chạy nhanh trên Windows
 
 ```powershell

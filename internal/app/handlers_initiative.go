@@ -14,8 +14,8 @@ import (
 
 var allowedUploadExt = map[string]bool{
 	".png": true, ".jpg": true, ".jpeg": true, ".gif": true, ".webp": true,
-	".pdf": true, ".csv": true, ".xls": true, ".xlsx": true,
-	".doc": true, ".docx": true, ".txt": true, ".zip": true, ".mp4": true,
+	".pdf": true, ".csv": true, ".xlsx": true,
+	".docx": true, ".txt": true,
 }
 
 func (a *App) validCode(table, code string) bool {
@@ -427,13 +427,13 @@ func (a *App) attachmentPost(w http.ResponseWriter, r *http.Request, u *User) {
 		return
 	}
 	dir := filepath.Join(a.UploadDir, i.Code)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(dir, 0o700); err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
 	stored := token + ext
 	path := filepath.Join(dir, stored)
-	out, err := os.Create(path)
+	out, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
@@ -451,7 +451,12 @@ func (a *App) attachmentPost(w http.ResponseWriter, r *http.Request, u *User) {
 		flashRedirect(w, r, fmt.Sprintf("/initiatives/%d", id), "File vượt quá 10 MB.")
 		return
 	}
-	mimeType := hdr.Header.Get("Content-Type")
+	if err := validateAttachmentFile(path, ext); err != nil {
+		os.Remove(path)
+		flashRedirect(w, r, fmt.Sprintf("/initiatives/%d", id), "Nội dung file không hợp lệ hoặc định dạng chưa được hỗ trợ.")
+		return
+	}
+	mimeType := mime.TypeByExtension(ext)
 	if mimeType == "" {
 		mimeType = "application/octet-stream"
 	}
