@@ -27,7 +27,7 @@ Build file chạy:
 .\bin\kaizen.exe
 ```
 
-Yêu cầu Go 1.25+ (khuyến nghị Go 1.27 như môi trường hiện tại). Driver SQLite là `modernc.org/sqlite` (pure Go, không cần CGO).
+Yêu cầu Go 1.27.4+ (bản vá bảo mật công bố 10/11/2026). Driver SQLite là `modernc.org/sqlite` (pure Go, không cần CGO).
 
 ### Truy cập LAN / Tailscale
 
