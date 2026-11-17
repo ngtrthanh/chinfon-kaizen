@@ -1,0 +1,18 @@
+{
+  "framework": "OWASP ASVS 5.0.0",
+  "target_level": 2,
+  "branch": "security/asvs5-l2-foundation-20261117",
+  "assessment_owner": "MIS / independent security reviewer (to be appointed)",
+  "overall": "NOT_ASSESSED",
+  "controls": {
+    "V6.4.1": {
+      "status": "REMEDIATED_UNVERIFIED",
+      "evidence": [
+        "internal/app/invite.go",
+        "internal/app/staff_test.go"
+      ],
+      "reviewer": null,
+      "note": "Replaces mobile number PIN; integration tests and independent review pending"
+    }
+  }
+}

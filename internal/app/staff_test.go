@@ -276,7 +276,7 @@ func TestStaffImportDisablesDemoAndIsIdempotent(t *testing.T) {
 	}
 }
 
-func TestBootstrapPINLoginForcesPasswordChange(t *testing.T) {
+func TestBootstrapInviteForcesPasswordChange(t *testing.T) {
 	a := newTestApp(t, true)
 	mustAdmin(t, a)
 	csv := "emp_id,name,dept_code,dept_name,report_to,e_mail,mobile_num,seed_pin,role\n" +
@@ -290,9 +290,19 @@ func TestBootstrapPINLoginForcesPasswordChange(t *testing.T) {
 	}
 	h := a.Handler()
 
+	// The 5 digits from the phone number are no longer an acceptable credential.
 	csrf, loginCookies := loginPageCSRF(t, h)
 	rec := postForm(t, h, "/login", url.Values{
 		"_csrf": {csrf}, "username": {"P81-0001"}, "password": {"45678"},
+	}, loginCookies)
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "Sai tài khoản") {
+		t.Fatalf("mobile-derived PIN must be rejected; status=%d", rec.Code)
+	}
+	invite, err := a.IssueInvite("P81-0001")
+	if err != nil { t.Fatal(err) }
+	csrf, loginCookies = loginPageCSRF(t, h)
+	rec = postForm(t, h, "/login", url.Values{
+		"_csrf": {csrf}, "username": {"P81-0001"}, "password": {invite},
 	}, loginCookies)
 	if rec.Code != http.StatusSeeOther {
 		t.Fatalf("login status=%d body=%s", rec.Code, rec.Body.String())
@@ -327,7 +337,7 @@ func TestBootstrapPINLoginForcesPasswordChange(t *testing.T) {
 	csrf = regexp.MustCompile(`name="_csrf" value="([^"]+)"`).FindStringSubmatch(rec.Body.String())[1]
 
 	rec = postForm(t, h, "/account/password", url.Values{
-		"_csrf": {csrf}, "current_password": {"45678"}, "new_password": {"StrongPass123"},
+		"_csrf": {csrf}, "current_password": {invite}, "new_password": {"StrongPass123"},
 	}, session)
 	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/mfa/setup" {
 		t.Fatalf("password change should lead to MFA setup: %d %q", rec.Code, rec.Header().Get("Location"))

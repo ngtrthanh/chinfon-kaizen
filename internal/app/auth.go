@@ -326,14 +326,14 @@ func (a *App) loginPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var id int64
-	var hash, mobile, lockedRaw string
+	var hash, bootstrapHash, bootstrapExpires, lockedRaw string
 	var mustChange, mfaEnrolled int
 	err = a.DB.QueryRow(`
-		SELECT u.id, u.password_hash, u.must_change_password, u.totp_confirmed, COALESCE(e.mobile_num,''),
+		SELECT u.id, u.password_hash, u.must_change_password, u.totp_confirmed, COALESCE(u.bootstrap_token_hash,''), COALESCE(u.bootstrap_expires_at,''),
 		       COALESCE(u.locked_until,'')
 		FROM app_user u
 		JOIN md_employee e ON e.employee_no = u.employee_no AND e.active = 1
-		WHERE u.username = ? COLLATE NOCASE AND u.active = 1`, username).Scan(&id, &hash, &mustChange, &mfaEnrolled, &mobile, &lockedRaw)
+		WHERE u.username = ? COLLATE NOCASE AND u.active = 1`, username).Scan(&id, &hash, &mustChange, &mfaEnrolled, &bootstrapHash, &bootstrapExpires, &lockedRaw)
 	if err == nil && lockedRaw != "" {
 		if until, ok := parseAppTime(lockedRaw); ok && until.After(time.Now()) {
 			a.audit(r, username, "LOGIN_LOCKED", "/login", "429 DENIED", "Tài khoản đang tạm khóa")
@@ -341,13 +341,14 @@ func (a *App) loginPost(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	pinLogin := false
+	inviteLogin := false
 	ok := false
 	if err == nil {
 		if hash == "pending" {
-			pin := last5Digits(mobile)
-			ok = pin != "" && subtle.ConstantTimeCompare([]byte(password), []byte(pin)) == 1
-			pinLogin = ok
+			// ASVS 5.0 V6.4.1: only high-entropy, time-limited bootstrap credentials.
+			ok = bootstrapHash != "" && bootstrapExpires > nowUTC() &&
+				subtle.ConstantTimeCompare([]byte(tokenHash(password)), []byte(bootstrapHash)) == 1
+			inviteLogin = ok
 		} else {
 			ok = security.VerifyPassword(hash, password)
 		}
@@ -358,8 +359,8 @@ func (a *App) loginPost(w http.ResponseWriter, r *http.Request) {
 			_, _ = a.recordAuthFailure(id)
 		}
 		time.Sleep(300 * time.Millisecond)
-		a.audit(r, username, "LOGIN_FAILED", "/login", "401 DENIED", "Sai tài khoản, mật khẩu hoặc PIN khởi tạo")
-		a.render(w, "login", PageData{Title: "Đăng nhập", Error: "Sai tài khoản hoặc mật khẩu/PIN.", LoginCSRF: a.loginCSRF(w, r)})
+		a.audit(r, username, "LOGIN_FAILED", "/login", "401 DENIED", "Sai tài khoản hoặc thông tin xác thực")
+		a.render(w, "login", PageData{Title: "Đăng nhập", Error: "Sai tài khoản hoặc mật khẩu.", LoginCSRF: a.loginCSRF(w, r)})
 		return
 	}
 	a.loginLimiter.reset(limitKey)
@@ -372,12 +373,12 @@ func (a *App) loginPost(w http.ResponseWriter, r *http.Request) {
 	_ = a.DB.QueryRow(`SELECT employee_no FROM app_user WHERE id=?`, id).Scan(&empNo)
 	action := "LOGIN_SUCCESS"
 	detail := "Đăng nhập thành công"
-	if pinLogin {
-		action = "LOGIN_BOOTSTRAP_PIN"
-		detail = "Đăng nhập bằng PIN khởi tạo (5 số cuối mobile); bắt buộc đổi mật khẩu"
+	if inviteLogin {
+		action = "LOGIN_BOOTSTRAP_INVITE"
+		detail = "Đăng nhập bằng mã kích hoạt ngẫu nhiên có thời hạn; bắt buộc đổi mật khẩu"
 	}
 	a.audit(r, empNo, action, "/", "200 OK", detail)
-	if pinLogin || mustChange == 1 {
+	if inviteLogin || mustChange == 1 {
 		http.Redirect(w, r, "/account?msg="+url.QueryEscape("Bạn đang dùng PIN/mật khẩu tạm. Vui lòng đặt mật khẩu mới."), http.StatusSeeOther)
 		return
 	}
@@ -512,18 +513,17 @@ func (a *App) accountPage(w http.ResponseWriter, r *http.Request, u *User) {
 func (a *App) changePasswordPost(w http.ResponseWriter, r *http.Request, u *User) {
 	current := r.FormValue("current_password")
 	newPassword := r.FormValue("new_password")
-	var hash, mobile string
+	var hash, bootstrapHash, bootstrapExpires string
 	if err := a.DB.QueryRow(`
-		SELECT u.password_hash, COALESCE(e.mobile_num,'')
-		FROM app_user u JOIN md_employee e ON e.employee_no=u.employee_no
-		WHERE u.id=?`, u.ID).Scan(&hash, &mobile); err != nil {
+		SELECT password_hash, bootstrap_token_hash, bootstrap_expires_at
+		FROM app_user WHERE id=?`, u.ID).Scan(&hash, &bootstrapHash, &bootstrapExpires); err != nil {
 		http.Error(w, "user not found", 404)
 		return
 	}
 	verified := false
 	if hash == "pending" {
-		pin := last5Digits(mobile)
-		verified = pin != "" && subtle.ConstantTimeCompare([]byte(current), []byte(pin)) == 1
+		verified = bootstrapHash != "" && bootstrapExpires > nowUTC() &&
+			subtle.ConstantTimeCompare([]byte(tokenHash(current)), []byte(bootstrapHash)) == 1
 	} else {
 		verified = security.VerifyPassword(hash, current)
 	}
@@ -542,7 +542,7 @@ func (a *App) changePasswordPost(w http.ResponseWriter, r *http.Request, u *User
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	if _, err := a.DB.Exec(`UPDATE app_user SET password_hash=?, must_change_password=0, csrf_token=? WHERE id=?`, newHash, csrf, u.ID); err != nil {
+	if _, err := a.DB.Exec(`UPDATE app_user SET password_hash=?, must_change_password=0, csrf_token=?, bootstrap_token_hash='', bootstrap_expires_at='' WHERE id=?`, newHash, csrf, u.ID); err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}

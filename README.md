@@ -1,3 +1,5 @@
+> **Security notice — ASVS 5.0 L2 pilot:** Old instructions mentioning mobile-derived initial PINs are superseded. Use `issue-invite` and verify all security gates before production. 
+
 # Chinfon Kaizen 360° — v3
 
 Bản mới của ứng dụng sáng kiến & khen thưởng, xây dựng lại từ hai nguồn:
@@ -6,6 +8,8 @@ Bản mới của ứng dụng sáng kiến & khen thưởng, xây dựng lại 
 - **v1**: các điểm mạnh kỹ thuật — đăng nhập thật, CSRF, master data, RBAC server-side, lịch sử bất biến, tệp đính kèm có SHA-256, kiểm thử.
 
 v3 là một ứng dụng Go **single binary**, không Node.js, không build frontend, không CDN. Toàn bộ template/CSS/JS/migration được nhúng vào file thực thi.
+
+> **ASVS 5.0 L2 implementation in progress:** see [security/asvs/README.md](security/asvs/README.md). This branch is NOT an ASVS-compliant release. Phone-derived PIN bootstrap is disabled; use `kaizen issue-invite <username>` from the server console after importing staff. The token expires in 30 minutes. Existing pending accounts require provisioning. Internet/LAN access requires an HTTPS reverse proxy and secure cookies. Old `start-lan.cmd` direct HTTP access is disabled.
 
 ## 1. Chạy nhanh trên Windows
 
@@ -23,7 +27,7 @@ Build file chạy:
 .\bin\kaizen.exe
 ```
 
-Yêu cầu Go 1.25+ (khuyến nghị Go 1.27 như môi trường hiện tại). Driver SQLite là `modernc.org/sqlite` (pure Go, không cần CGO).
+Yêu cầu Go 1.27.4+ (bản vá bảo mật công bố 10/11/2026). Driver SQLite là `modernc.org/sqlite` (pure Go, không cần CGO).
 
 ### Truy cập LAN / Tailscale
 
@@ -99,7 +103,7 @@ emp_id,name,job_title,dept_code,dept_name,report_to,e_mail,mobile_num,seed_pin,r
 | `dept_name` | Không | Tên đơn vị; trống sẽ dùng mã |
 | `report_to` | Không | Mã quản lý trực tiếp |
 | `e_mail` | Không | Có thể trống; nếu có phải đúng định dạng |
-| `mobile_num` | Không* | 5–15 chữ số; PIN khởi tạo = 5 số cuối. Nếu trống, nhân sự vẫn được import nhưng chưa tạo tài khoản |
+| `mobile_num` | Không* | 5–15 chữ số; Mã ngẫu nhiên cấp qua CLI, không lấy từ số điện thoại. Nếu trống, nhân sự vẫn được import nhưng chưa tạo tài khoản |
 | `seed_pin` | Không | Nếu điền phải đúng 5 số cuối mobile; **không lưu vào CSDL** |
 | `role` | Không | Mặc định `employee`; nhiều vai trò cách nhau bởi `\|` |
 | `group` | Không | Nhóm / tổ / ca làm việc, tối đa 120 ký tự |
@@ -113,15 +117,15 @@ Phạm vi được suy ra tự động: `council/hr/director/ceo/admin` → `ALL
 - Với nhân viên đã tồn tại, ô trống `job_title`, `group`, `e_mail`, `report_to` giữ giá trị cũ; muốn xóa thì sửa trong **Master data → Nhân viên**.
 - Import 1.000 dòng không băm 1.000 PIN, nên chạy nhanh. Tài khoản mới có `password_hash='pending'`.
 
-### 3.3 Đăng nhập lần đầu
+### 3.3 Đăng nhập lần đầu — mã kích hoạt riêng
 
-- Username = `emp_id`; mật khẩu = **5 số cuối `mobile_num`** (hoặc `seed_pin` đã kiểm tra khớp).
-- Hệ thống bắt buộc đổi mật khẩu ≥ 10 ký tự trước khi dùng chức năng khác.
-- Sau khi đổi mật khẩu, người dùng **bắt buộc thiết lập MFA**: quét QR bằng Google/Microsoft Authenticator rồi nhập mã 6 số.
-- Từ lần đăng nhập sau: mật khẩu → mã TOTP 6 số → mới vào hệ thống.
-- Nếu nhân sự chưa có `mobile_num`, tài khoản chưa được tạo; bổ sung mobile rồi import lại để cấp tài khoản/PIN.
-- PIN không lưu trong CSDL; có giới hạn 10 lần thử / 10 phút theo IP + username, và backoff theo tài khoản.
-- Tài khoản ADMIN tạo tay hoặc reset mật khẩu cũng bị buộc đổi ở lần đăng nhập kế tiếp, sau đó thiết lập/ xác thực MFA.
+Tên đăng nhập: `emp_id`. Tài khoản mới ở trạng thái `pending`. Người có quyền quản trị trên máy chủ thực hiện:
+
+```powershell
+.\bin\kaizen.exe issue-invite P81-0001
+```
+
+Mã được sinh ngẫu nhiên, có thời hạn 30 phút, không lưu dạng rõ trong DB; giao riêng sau khi xác minh danh tính. Nhân viên đặt mật khẩu mới (tối thiểu 10 ký tự) và thiết lập MFA TOTP. Mã dựa trên số điện thoại không còn hợp lệ.
 
 ### 3.4 Chế độ vận hành (demo đã tắt)
 
@@ -153,7 +157,7 @@ Hoặc dùng trực tiếp:
 .\bin\kaizen.exe import-staff
 # hoặc chỉ định file:
 .\bin\kaizen.exe import-staff "C:\...\data\uploads\P81.csv"
-# reset PIN khởi tạo cho tài khoản đã tồn tại:
+# đặt lại trạng thái chờ kích hoạt cho tài khoản đã tồn tại:
 .\bin\kaizen.exe import-staff --reset-pin
 ```
 
@@ -165,7 +169,7 @@ Hoặc dùng trực tiếp:
 ### 3.6 Hội đồng ĐGKT
 
 - Thêm một dòng `role=council` trong CSV, hoặc dùng form **Tạo tài khoản Hội đồng** (chọn nhân viên).
-- Tài khoản mới nhận PIN = 5 số cuối mobile, phạm vi `ALL`, không có quyền `track:confidential:read`.
+- Tài khoản mới nhận mã ngẫu nhiên do quản trị cấp qua CLI, phạm vi `ALL`, không có quyền `track:confidential:read`.
 - Tài khoản đã tồn tại chỉ được thêm vai trò `COUNCIL` và mở phạm vi `ALL`; mật khẩu hiện tại được giữ nguyên.
 
 ### 3.7 Xuất danh sách
@@ -240,7 +244,7 @@ Mỗi bước có thể `APPROVE`, `REJECT` (lưu hồ sơ, không xóa) hoặc 
 - Phiên đăng nhập chỉ được coi là đầy đủ sau khi xác thực MFA; phiên trước MFA chỉ sống 10 phút và chỉ vào được trang MFA.
 - Backoff theo tài khoản: sau 5 lần sai, khóa 1, 2, 4, 8 rồi tối đa 15 phút; kèm giới hạn theo IP + username.
 - Reset MFA: ADMIN khác trong trang Người dùng, hoặc CLI `reset-mfa` khi mất thiết bị/không còn ADMIN đăng nhập được. Chi tiết: [`docs/MFA.md`](docs/MFA.md).
-- PIN khởi tạo (5 số cuối mobile) **không lưu**; tài khoản mới ở trạng thái `pending` và bắt buộc đổi mật khẩu.
+- Mã ngẫu nhiên được lưu dưới dạng hash và có thời hạn; tài khoản mới ở trạng thái `pending` và bắt buộc đổi mật khẩu.
 - Demo mode được lưu trong `app_setting`; hồ sơ demo có `is_demo` và bị ẩn ngay trong SQL khi tắt demo.
 - Session cookie `HttpOnly`, `SameSite=Strict`, hết hạn 12 giờ; token lưu dạng SHA-256.
 - CSRF cho mọi POST; token ổn định theo người dùng (không mất hiệu lực khi mở tab mới/đăng nhập lại), login/setup dùng double-submit cookie dùng lại giữa các tab.

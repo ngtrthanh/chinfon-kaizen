@@ -1,6 +1,6 @@
 {{define "account"}}{{template "head" .}}{{template "sidebar" .}}{{template "topbar" .}}
 {{if .User.MustChangePassword}}
-<div class="flash error">{{icon "lock"}}<span><b>Bắt buộc đổi mật khẩu.</b> Bạn đang dùng PIN/mật khẩu tạm. Hãy đặt mật khẩu mới (≥ 10 ký tự) trước khi tiếp tục.</span></div>
+<div class="flash error">{{icon "lock"}}<span><b>Bắt buộc đổi mật khẩu.</b> Bạn đang dùng mã kích hoạt/mật khẩu tạm. Hãy đặt mật khẩu mới (≥ 10 ký tự) trước khi tiếp tục.</span></div>
 {{end}}
 <div class="grid-2">
   <section class="card">

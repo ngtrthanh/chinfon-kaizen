@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -23,6 +24,14 @@ func main() {
 	dbPath := env("APP_DB", filepath.Join(dataDir, "kaizen.db"))
 	uploadDir := env("APP_UPLOAD_DIR", filepath.Join(dataDir, "uploads"))
 	cookieSecure := envBool("COOKIE_SECURE")
+	// A shared interface is not permitted with plaintext HTTP session cookies.
+	// Put a reverse proxy with TLS in front of a loopback-bound app.
+	host, _, splitErr := net.SplitHostPort(addr)
+	if splitErr != nil { logger.Fatal(splitErr) }
+	ip := net.ParseIP(host)
+	if !cookieSecure && host != "localhost" && (ip == nil || !ip.IsLoopback()) {
+		logger.Fatal("non-loopback binding requires COOKIE_SECURE=true and HTTPS at a trusted reverse proxy; do not expose plain HTTP")
+	}
 	seedDemo := envBoolDefault("APP_SEED_DEMO", false)
 
 	cfg := app.Config{
@@ -33,6 +42,20 @@ func main() {
 		Logger:       logger,
 	}
 
+	if len(os.Args) > 1 && os.Args[1] == "issue-invite" {
+		if len(os.Args) != 3 {
+			fmt.Fprintln(os.Stderr, "usage: kaizen issue-invite <username>")
+			os.Exit(2)
+		}
+		cfg.SeedDemo = false
+		application, err := app.New(cfg)
+		if err != nil { logger.Fatal(err) }
+		defer application.Close()
+		token, err := application.IssueInvite(os.Args[2])
+		if err != nil { logger.Fatal(err) }
+		fmt.Printf("One-time bootstrap credential for %s (30 min, keep private): %s\n", os.Args[2], token)
+		return
+	}
 	if len(os.Args) > 1 && os.Args[1] == "reset-mfa" {
 		if len(os.Args) < 3 {
 			fmt.Fprintln(os.Stderr, "usage: kaizen reset-mfa <username>")

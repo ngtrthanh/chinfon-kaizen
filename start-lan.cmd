@@ -1,9 +1,7 @@
 @echo off
 chcp 65001 >nul
-setlocal
 cd /d "%~dp0"
-set APP_ADDR=0.0.0.0:8080
-if not defined APP_DATA_DIR set APP_DATA_DIR=%~dp0data
-if not defined APP_SEED_DEMO set APP_SEED_DEMO=false
-call start.cmd
-endlocal
+echo [SECURITY] Plain HTTP on a LAN is disabled for personnel data.
+echo Run start.cmd on 127.0.0.1 and publish HTTPS through a trusted reverse proxy.
+echo For a Tailscale tailnet, configure tailscale serve with HTTPS to localhost:8080.
+exit /b 1

@@ -1,3 +1,5 @@
+> **Security update (17 Nov 2026):** Sections describing the five-digit mobile PIN reflect previous releases and are superseded. Only random, expiring invitations are accepted. 
+
 # Staff import guide — P81 / 1,000 employees
 
 This guide is the exact contract for **Cài đặt & RBAC → Nhân sự & Import**.
@@ -26,7 +28,7 @@ emp_id,name,job_title,dept_code,dept_name,report_to,e_mail,mobile_num,seed_pin,r
 | `dept_name` | No | Department name. If new and blank, the code is used. | `Phòng Kỹ thuật 81` |
 | `report_to` | No | Manager's `emp_id`. Stored for reference only, no permission effect. | `P81-0000` |
 | `e_mail` | No | Email if available. **Leave blank if none** — do not write `N/A`. Must be a valid email if filled. | `a.nguyen@chinfon.com` |
-| `mobile_num` | No* | 5–15 digits. The last 5 digits are the initial password. If blank, the employee is imported but **no account** is created. Keep it as Text in Excel. | `0912345678` |
+| `mobile_num` | No* | 5–15 digits. An administrator must issue a random 30-minute invite; the phone is not a credential. If blank, the employee is imported but **no account** is created. Keep it as Text in Excel. | `0912345678` |
 | `seed_pin` | No | Leave blank normally. If filled, it must be exactly the last 5 digits of `mobile_num`. It is **not stored**. | `45678` |
 | `role` | No | Blank = `employee`. Multiple roles separated by `\|`. Case-insensitive. | `manager\|employee` |
 | `group` | No | Team / shift / group within the department. Max 120. | `Tổ Cơ khí` |
@@ -107,7 +109,7 @@ cd C:\Users\User\App\01-service\initiative-app\v3
 - If no path is given, the CLI looks for `staff.csv`, `personnel.csv`,
   `employees.csv`, `nhan_su.csv`, or the only `.csv` in the uploads root.
 - Pass a path to use a different file: `.\import-staff.cmd "C:\...\P81.csv"`.
-- Add `--reset-pin` to reset existing accounts to the mobile PIN.
+- The legacy `--reset-pin` option resets an account to pending; a new invite is then required.
 - The CLI prints row counts and all validation errors. It does not need an ADMIN login.
 - Stop the server first if possible.
 
@@ -127,7 +129,7 @@ cd C:\Users\User\App\01-service\initiative-app\v3
 - Each row **with a mobile** gets an account:
   - username = `emp_id`;
   - `password_hash='pending'`;
-  - initial password = last 5 digits of `mobile_num`;
+  - initial sign-in secret is issued separately by authorized server operator;
   - forced password change on first login, then MFA enrolment.
 - Roles/scope of every `emp_id` present in the file are **replaced** by the CSV values
   (when an account exists or is created).
@@ -135,21 +137,15 @@ cd C:\Users\User\App\01-service\initiative-app\v3
 - Demo mode is disabled by default; no demo data is seeded.
 - The import is limited to 5,000 rows / 8 MB.
 
-## 7. First login and MFA
+## 7. Secure initial login (ASVS V6.4.1)
 
-```text
-Username: P81-0001
-Password: 45678          (last 5 digits of 0912345678)
+Initial passwords derived from phone numbers are disabled. After staff import, each account remains pending until an operator with server-console authority runs:
+
+```powershell
+.\bin\kaizen.exe issue-invite P81-0001
 ```
 
-1. The user is forced to set a new password (≥ 10 characters).
-2. The user is then forced to enrol MFA: scan the QR with Google/Microsoft
-   Authenticator and enter the 6-digit code.
-3. From the next login: password → 6-digit TOTP → dashboard.
-
-The PIN is not stored. Login attempts are limited to 10 failures / 10 minutes
-plus per-account exponential backoff. MFA can be reset by another ADMIN or by
-the `reset-mfa` CLI. See [`docs/MFA.md`](MFA.md).
+The command issues a random secret valid for 30 minutes. Transfer the secret privately after checking employee identity. The user signs in, changes password, then enrolls MFA. If it expires, issue a new secret. For company-wide provisioning, plan corporate SSO or an approved enrollment service.
 
 ## 8. Export
 
@@ -160,7 +156,7 @@ emp_id,name,job_title,dept_code,dept_name,report_to,e_mail,mobile_num,role,group
 ```
 
 - No PIN or password hash is exported.
-- `account_status`: `no_account`, `must_change_pin`, or `active`.
+- `account_status`: `no_account`, `must_change_password`, or `active`.
 - `mfa`: `no_account`, `not_enrolled`, or `enrolled`.
 - The export can be edited and re-imported; `role` codes such as `MANAGER|WORKER` are accepted.
 
@@ -182,11 +178,11 @@ emp_id,name,job_title,dept_code,dept_name,report_to,e_mail,mobile_num,role,group
 ## 10. Before importing 1,000 rows
 
 - [ ] Confirm the exact `dept_code`/`dept_name` (P81).
-- [ ] Confirm mobile numbers; the last 5 digits are the initial password.
+- [ ] Confirm mobile numbers; a random invitation must be issued.
 - [ ] Mark at least one `council` and one `admin` row.
 - [ ] Remove sample rows or replace them with real employees.
 - [ ] Decide whether current records should be archived as demo.
-- [ ] Test first-login PIN + forced password change + MFA enrolment for a worker,
+- [ ] Test short-lived invitation + forced password change + MFA enrolment for a worker,
       a manager, a council member and an admin.
 - [ ] Test ADMIN reset MFA and the `reset-mfa` CLI.
 - [ ] Export the staff list after import and reconcile headcount with HR.

@@ -7,7 +7,7 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 $go = Get-Command go -ErrorAction SilentlyContinue
 if (-not $go) {
     Write-Host "Go was not found in PATH." -ForegroundColor Red
-    Write-Host "Install Go 1.25+ (recommended 1.27) and reopen PowerShell." -ForegroundColor Yellow
+    Write-Host "Install Go 1.27.4+ and reopen PowerShell." -ForegroundColor Yellow
     exit 1
 }
 Write-Host "Go: $((& go version))" -ForegroundColor DarkGray

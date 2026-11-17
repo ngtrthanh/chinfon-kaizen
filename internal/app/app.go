@@ -41,10 +41,10 @@ func New(cfg Config) (*App, error) {
 	if strings.TrimSpace(cfg.UploadDir) == "" {
 		cfg.UploadDir = "data/uploads"
 	}
-	if err := os.MkdirAll(filepath.Dir(cfg.DBPath), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(cfg.DBPath), 0o700); err != nil {
 		return nil, err
 	}
-	if err := os.MkdirAll(cfg.UploadDir, 0o755); err != nil {
+	if err := os.MkdirAll(cfg.UploadDir, 0o700); err != nil {
 		return nil, err
 	}
 

@@ -178,7 +178,7 @@
       <label class="span2">Nhân viên<select name="employee_no" required><option value="">Chọn nhân viên…</option>{{range .Employees}}{{if .Active}}<option value="{{.EmployeeNo}}">{{.FullName}} — {{.DepartmentName}}</option>{{end}}{{end}}</select></label>
       <div class="span2"><button class="btn btn-safety" type="submit">{{icon "trophy"}} Cấp tài khoản Hội đồng</button></div>
     </form>
-    <p class="hint">Tài khoản mới: PIN khởi tạo = 5 số cuối <code>mobile_num</code>, phải đổi mật khẩu lần đầu. Tài khoản đã tồn tại: giữ nguyên mật khẩu, chỉ thêm vai trò và mở phạm vi toàn công ty.</p>
+    <p class="hint">Tài khoản mới: quản trị cấp mã kích hoạt bằng CLI issue-invite (30 phút), phải đổi mật khẩu và đăng ký MFA. Tài khoản đã tồn tại: giữ nguyên mật khẩu, chỉ thêm vai trò và mở phạm vi toàn công ty.</p>
   </section>
 </div>
 
@@ -193,7 +193,7 @@
       <label>File CSV (UTF-8, tối đa 8 MB)<input type="file" name="file" accept=".csv,text/csv" required></label>
       <div class="stack-check">
         <label class="check"><input type="checkbox" name="hide_demo" value="1" checked> Ẩn toàn bộ hồ sơ hiện có dưới nhãn demo khi tắt demo mode</label>
-        <label class="check"><input type="checkbox" name="reset_pin" value="1"> Reset PIN khởi tạo cho tài khoản đã tồn tại (5 số cuối mobile)</label>
+        <label class="check"><input type="checkbox" name="reset_pin" value="1"> Đặt tài khoản về trạng thái chờ cấp mã mới (issue-invite)</label>
       </div>
     </div>
     <p class="hint">Excel: <b>File → Save As → CSV UTF-8</b>. Giữ các cột <code>emp_id</code>, <code>mobile_num</code>, <code>seed_pin</code> ở định dạng <b>Text</b> để không mất số 0 đầu. Dùng dấu phẩy, chấm phẩy hoặc tab đều được. <b>Dòng hợp lệ vẫn được import; dòng lỗi bị bỏ qua và liệt kê bên dưới.</b> Với mỗi <code>emp_id</code> có trong file, vai trò và phạm vi được thay thế hoàn toàn. Thiếu <code>mobile_num</code> được chấp nhận: nhân sự vẫn được import, tài khoản sẽ tạo khi bổ sung mobile và import lại.</p>
@@ -235,7 +235,7 @@
 </section>
 
 <section class="card">
-  <div class="card-head"><div><h2>Danh sách nhân sự</h2><p class="muted">Tối đa 5.000 dòng. Tài khoản <b>PIN tạm</b> phải đổi mật khẩu khi đăng nhập lần đầu.</p></div></div>
+  <div class="card-head"><div><h2>Danh sách nhân sự</h2><p class="muted">Tối đa 5.000 dòng. Tài khoản <b>chờ kích hoạt</b> phải được cấp mã và đổi mật khẩu lần đầu.</p></div></div>
   {{if .Staff}}
   <div class="table-wrap scroll tall">
     <table class="table compact">

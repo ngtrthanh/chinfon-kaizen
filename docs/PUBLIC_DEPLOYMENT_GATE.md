@@ -10,8 +10,7 @@ public Internet or using it as the only reward ledger, complete the items below.
 - [ ] Add login rate limiting / lockout and alerting for repeated failures.
       v3.1 has an in-memory 10-failure/10-minute limiter; make it durable and
       shared before multi-instance deployment.
-- [ ] Decide whether 5-digit mobile PIN bootstrap is acceptable for all 1,000
-      staff. If not, issue random one-time PINs or use SSO.
+- [ ] Confirm identity proofing and distribution for 30-minute random invites; adopt SSO for mass onboarding. The 5-digit mobile PIN is disabled.
 - [ ] Confirm MFA is mandatory: the first admin, every imported worker, manager,
       council member and HRD must enrol a TOTP app before accessing data.
 - [ ] Back up `data/mfa.key` (or `APP_MFA_KEY`) separately from the DB. Without
@@ -43,7 +42,7 @@ public Internet or using it as the only reward ledger, complete the items below.
 - [ ] Confirm no demo data is required; migration 007 archives/hides demo records
       and production does not seed new ones.
 - [ ] Export the staff list and reconcile headcount with HR before go-live.
-- [ ] Test first-login PIN + forced password change for a worker, a manager, a
+- [ ] Test random invite + forced password change for a worker, a manager, a
       council member and an admin.
 - [ ] Remove/rotate the temporary `pending` accounts that never logged in.
 

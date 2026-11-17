@@ -424,7 +424,7 @@ func (a *App) applyStaffImport(rows []staffImportRow, resetPIN, hideDemo bool) (
 		return res, err
 	}
 	if res.DemoDisabled {
-		res.Notice = "Đã tắt chế độ demo. Mỗi nhân viên đăng nhập bằng emp_id + 5 số cuối mobile và phải đổi mật khẩu."
+		res.Notice = "Đã tắt chế độ demo. Tài khoản mới cần mã kích hoạt ngẫu nhiên có thời hạn cấp bởi quản trị, sau đó đổi mật khẩu và thiết lập MFA."
 	} else {
 		res.Notice = "Đã cập nhật nhân sự. Chế độ vận hành đang bật; dữ liệu demo vẫn bị ẩn."
 	}
@@ -589,7 +589,7 @@ func (a *App) staffExport(w http.ResponseWriter, r *http.Request, u *User) {
 		if s.HasAccount {
 			status = "active"
 			if s.MustChange {
-				status = "must_change_pin"
+				status = "must_change_password"
 			}
 		}
 		mfaStatus := "no_account"
