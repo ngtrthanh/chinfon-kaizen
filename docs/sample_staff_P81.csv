@@ -1,0 +1,11 @@
+﻿emp_id,name,job_title,dept_code,dept_name,report_to,e_mail,mobile_num,seed_pin,role,group
+P81-0001,Nguyễn Văn A,Kỹ sư Cơ khí,P81,Phòng Kỹ thuật 81,P81-0000,a.nguyen@chinfon.com,0912345678,,employee,Tổ Cơ khí
+P81-0002,Trần Thị B,Giám sát vận hành,P81,Phòng Kỹ thuật 81,P81-0001,,0909876543,76543,supervisor,Ca A
+P81-0003,Lê Văn C,Trưởng bộ phận,P81,Phòng Kỹ thuật 81,P81-0001,,0901112222,,manager|employee,Văn phòng
+P81-0004,Phạm Thị D,Kỹ thuật viên,P81,Phòng Kỹ thuật 81,P81-0003,,0902223333,,employee,Tổ Điện
+P81-0005,Hoàng Văn E,Thành viên Hội đồng,P81,Phòng Kỹ thuật 81,P81-0003,,0903334444,,council,Hội đồng ĐGKT
+P81-0006,Vũ Thị F,Chuyên viên Nhân sự,P81,Phòng Kỹ thuật 81,P81-0000,,0904445555,,hr,Phòng HRD
+P81-0007,Đỗ Văn G,Quản trị hệ thống,P81,Phòng Kỹ thuật 81,P81-0000,,0905556666,,admin,MIS
+P81-0008,Ngô Thị H,Công nhân vận hành,P81,Phòng Kỹ thuật 81,P81-0001,,0906667777,,employee,Ca B
+P81-0009,Bùi Văn I,Kỹ sư Điện,P81,Phòng Kỹ thuật 81,P81-0001,,0907778888,,employee,Tổ Điện
+P81-0010,Dương Thị K,KCS,P81,Phòng Kỹ thuật 81,P81-0003,,0908889999,,employee,Tổ KCS

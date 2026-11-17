@@ -1,0 +1,36 @@
+{{define "account"}}{{template "head" .}}{{template "sidebar" .}}{{template "topbar" .}}
+{{if .User.MustChangePassword}}
+<div class="flash error">{{icon "lock"}}<span><b>Bắt buộc đổi mật khẩu.</b> Bạn đang dùng PIN/mật khẩu tạm. Hãy đặt mật khẩu mới (≥ 10 ký tự) trước khi tiếp tục.</span></div>
+{{end}}
+<div class="grid-2">
+  <section class="card">
+    <div class="card-head"><div><h2>Tài khoản</h2><p class="muted">Danh tính lấy từ master data nhân sự; không sửa trực tiếp tại đây.</p></div></div>
+    <dl class="kv">
+      <dt>Tên đăng nhập</dt><dd>{{.User.Username}}</dd>
+      <dt>Mã nhân viên</dt><dd>{{.User.EmployeeNo}}</dd>
+      <dt>Họ tên</dt><dd>{{.User.FullName}}</dd>
+      <dt>Đơn vị</dt><dd>{{.User.DepartmentName}}</dd>
+      <dt>Phạm vi dữ liệu</dt><dd>{{if eq .User.Scope "ALL"}}Toàn công ty{{else}}{{.User.Scope}}{{end}}</dd>
+      <dt>Vai trò</dt><dd>{{range .User.Roles}}<span class="role-chip role-{{.}}">{{.}}</span> {{end}}</dd>
+      <dt>MFA</dt><dd>{{if .User.MFAEnrolled}}<span class="tag tag-green">Đã bật</span>{{else}}<span class="tag tag-amber">Chưa thiết lập</span>{{end}}</dd>
+    </dl>
+    <p class="hint">MFA dùng ứng dụng TOTP (Google/Microsoft Authenticator). Nếu mất thiết bị, liên hệ ADMIN để reset MFA; không tự reset được.</p>
+  </section>
+  <section class="card">
+    <div class="card-head"><div><h2>Đổi mật khẩu</h2><p class="muted">Thu hồi toàn bộ phiên đăng nhập sau khi đổi.</p></div></div>
+    <form method="post" action="/account/password" class="form">
+      <input type="hidden" name="_csrf" value="{{.CSRF}}">
+      <label>Mật khẩu hiện tại<input type="password" name="current_password" autocomplete="current-password" required></label>
+      <label>Mật khẩu mới (≥ 10 ký tự)<input type="password" name="new_password" minlength="10" autocomplete="new-password" required></label>
+      <button class="btn btn-dark" type="submit">{{icon "lock"}} Đổi mật khẩu</button>
+    </form>
+  </section>
+</div>
+<section class="card">
+  <div class="card-head"><div><h2>Quyền hiệu lực</h2><p class="muted">Tổng hợp từ các vai trò được gán (cộng dồn).</p></div></div>
+  <div class="perm-grid">
+    {{range $key, $value := .User.Permissions}}{{if $value}}<span class="tag tag-green">{{$key}}</span>{{end}}{{end}}
+  </div>
+  <p class="hint">Phạm vi dữ liệu và quyền được quản trị tại <b>Cài đặt &amp; RBAC</b>. Mọi thay đổi quyền có hiệu lực ngay ở phiên kế tiếp.</p>
+</section>
+{{template "foot" .}}{{end}}

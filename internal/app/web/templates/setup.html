@@ -1,0 +1,34 @@
+{{define "setup"}}<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>Thiết lập lần đầu · Chinfon Kaizen 360</title><link rel="stylesheet" href="/static/app.css"></head>
+<body class="auth-body">
+<div class="auth-shell wide">
+  <section class="auth-brand">
+    <div class="brand-mark large">CF</div>
+    <h1>Thiết lập lần đầu</h1>
+    <p>Chưa có tài khoản nào. Tạo tài khoản <b>ADMIN</b> đầu tiên; sau đó cấp tài khoản cho từng vai trò.</p>
+    <ul>
+      <li>🔐 PBKDF2-SHA256 · mật khẩu ≥ 10 ký tự</li>
+      <li>📋 Master data &amp; RBAC có sẵn theo PN-B0000-02</li>
+      <li>🧪 Có thể liên kết mã nhân viên demo (CF-0001, CF-0018…)</li>
+    </ul>
+    <span class="auth-footnote">Dữ liệu minh họa có thể được nạp sẵn; không có tài khoản demo.</span>
+  </section>
+  <section class="auth-card">
+    <h2>Tạo ADMIN đầu tiên</h2>
+    {{if .Error}}<div class="flash error">{{icon "alert"}}<span>{{.Error}}</span></div>{{end}}
+    <form method="post" action="/setup" class="form">
+      <input type="hidden" name="_csrf" value="{{.LoginCSRF}}">
+      <div class="form-grid compact">
+        <label>Mã đơn vị<input name="department_code" value="BOD" maxlength="20" required></label>
+        <label>Tên đơn vị<input name="department_name" value="Ban Giám đốc & Kiểm toán Nội bộ" maxlength="120" required></label>
+        <label>Mã nhân viên<input name="employee_no" value="CF-9999" maxlength="20" required></label>
+        <label>Họ tên<input name="full_name" maxlength="120" required placeholder="Nguyễn Trọng Thành"></label>
+        <label>Tên đăng nhập<input name="username" maxlength="40" required autocomplete="username"></label>
+        <label>Mật khẩu (≥ 10 ký tự)<input type="password" name="password" minlength="10" required autocomplete="new-password"></label>
+      </div>
+      <button class="btn btn-safety btn-block" type="submit">{{icon "check"}} Tạo tài khoản &amp; vào hệ thống</button>
+    </form>
+    <p class="auth-note">Tài khoản đầu tiên nhận vai trò ADMIN và phạm vi “Toàn công ty”. Không thể chạy lại thiết lập khi đã có tài khoản.</p>
+  </section>
+</div>
+</body></html>{{end}}

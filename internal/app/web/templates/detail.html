@@ -1,0 +1,183 @@
+{{define "detail"}}{{template "head" .}}{{template "sidebar" .}}{{template "topbar" .}}
+{{$i := .Initiative}}
+<div class="detail-head">
+  <div>
+    <div class="detail-meta-line">
+      <span class="code big">{{$i.Code}}</span>
+      <span class="tag {{if eq $i.TrackCode "CONFIDENTIAL"}}tag-rose{{else if eq $i.TrackCode "FAST48"}}tag-amber{{else}}tag-sky{{end}}">{{$i.TrackName}}</span>
+      <span class="stage stage-{{$i.StageCode}}">{{$i.StageName}}</span>
+      {{if eq $i.RecordStatus "REJECTED"}}<span class="tag tag-rose">Đã từ chối</span>{{end}}
+    </div>
+    <h2 class="detail-title">{{$i.Title}}</h2>
+    <p class="muted">{{$i.DepartmentName}} · {{$i.SubmitterName}} · tạo {{dateTime $i.CreatedAt}}{{if $i.DueAt.Valid}} · hạn SLA {{dateTime $i.DueAt.String}}{{end}}</p>
+  </div>
+  <div class="detail-actions">
+    <a class="btn btn-ghost" href="/print/{{$i.ID}}" target="_blank" rel="noopener">{{icon "file"}} In Phụ lục 02</a>
+    {{if .CanEdit}}<a class="btn btn-ghost" href="/initiatives/{{$i.ID}}/edit">{{icon "edit"}} Sửa nháp</a>{{end}}
+  </div>
+</div>
+
+{{if eq $i.TrackCode "CONFIDENTIAL"}}
+<div class="flash secret-flash">{{icon "lock"}}<span><b>Luồng 3 — Bảo mật.</b> Hồ sơ chỉ hiển thị cho TGĐ &amp; Kiểm toán Nội bộ. Việc mở hồ sơ này đã được ghi audit.</span></div>
+{{end}}
+{{if eq $i.RecordStatus "REJECTED"}}
+<div class="flash error">{{icon "alert"}}<span><b>Hồ sơ đã bị từ chối.</b> {{if $i.RejectReason.Valid}}{{$i.RejectReason.String}}{{end}} Hồ sơ được lưu vết, không xóa.</span></div>
+{{end}}
+
+<div class="detail-layout">
+  <div class="detail-main">
+    <section class="card">
+      <div class="card-head"><div><h2>Hiện trạng</h2></div></div>
+      <h3 class="lead">{{$i.ProblemSummary}}</h3>
+      <p class="pre">{{$i.ProblemDetail}}</p>
+    </section>
+    <section class="card">
+      <div class="card-head"><div><h2>Giải pháp</h2></div></div>
+      <h3 class="lead">{{$i.SolutionSummary}}</h3>
+      <p class="pre">{{$i.SolutionDetail}}</p>
+      <div class="facts">
+        <div><span>Thiết bị / địa điểm</span><strong>{{if $i.EquipmentCode}}{{$i.EquipmentCode}}{{else}}—{{end}}</strong></div>
+        <div><span>Triển khai</span><strong>{{$i.ImplementationStatusName}}</strong></div>
+        <div><span>Tỷ lệ chia nhóm</span><strong>{{if $i.SplitRatio}}{{$i.SplitRatio}}{{else}}—{{end}}</strong></div>
+        <div><span>Tác giả</span><strong>{{$i.SubmitterName}}</strong></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><div><h2>Phụ lục 02 — Giá trị làm lợi &amp; khung thưởng</h2><p class="muted">Đơn vị: VNĐ · số liệu do Hội đồng/TGĐ chốt tại bước thẩm định</p></div></div>
+      <div class="facts">
+        <div><span>Tiết kiệm 12 tháng (A)</span><strong>{{money $i.GrossValueVND}}</strong></div>
+        <div><span>Chi phí đầu tư (B)</span><strong>{{money $i.InvestCostVND}}</strong></div>
+        <div><span>Lợi ích ròng (A−B)</span><strong class="ok-text">{{money $i.NetBenefitVND}}</strong></div>
+        <div><span>Hệ số Phụ lục 03</span><strong>{{if $i.Annex03}}1.2x{{else}}Không{{end}}</strong></div>
+      </div>
+      <div class="reward-banner">
+        <div><span>{{$i.RewardTierName}}</span><small>{{if eq $i.RewardBasis "NONFINANCIAL"}}Thưởng phi tài chính Mục 5.2{{else}}Khung 7 mức Mục 5.1{{end}}{{if $i.Annex03}} · đã nhân 1.2x{{end}}</small></div>
+        <strong>{{money $i.RewardAmountVND}}</strong>
+      </div>
+      <p class="hint">Thưởng khuyến khích ý tưởng 300.000 VNĐ (nếu có) là khoản tặng đứt, không trừ vào thưởng nghiệm thu.</p>
+      <h3 class="subhead">Lợi ích tóm tắt</h3>
+      <p class="pre">{{$i.BenefitSummary}}</p>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><div><h2>Nhóm tác giả &amp; tỷ lệ chia thưởng</h2></div></div>
+      <ul class="split-list">
+        <li><span class="avatar">{{initial $i.SubmitterName}}</span><div><strong>{{$i.SubmitterName}}</strong><small>Người nộp hồ sơ · phần còn lại</small></div><b>Phần còn lại</b></li>
+        {{range .Participants}}
+        <li><span class="avatar">{{initial .FullName}}</span><div><strong>{{.FullName}}</strong><small>{{.EmployeeNo}} · {{.DepartmentName}} · {{.RoleNote}}</small></div><b>{{.SharePercent}}%</b></li>
+        {{end}}
+      </ul>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><div><h2>Tài liệu đính kèm</h2><p class="muted">SHA-256 lưu tại CSDL để đối chiếu tính toàn vẹn.</p></div></div>
+      {{if .Attachments}}
+      <ul class="files">
+        {{range .Attachments}}
+        <li><a href="/attachments/{{.ID}}">{{icon "download"}} {{.OriginalFilename}}</a><span>{{.DocumentTypeName}} · {{bytes .SizeBytes}} · {{.UploadedByName}} · {{dateTime .UploadedAt}}<br>SHA-256: <code>{{shortHash .SHA256Hex}}…</code></span></li>
+        {{end}}
+      </ul>
+      {{else}}<p class="muted">Chưa có tài liệu.</p>{{end}}
+      {{if .CanContribute}}
+      <form method="post" action="/initiatives/{{$i.ID}}/attachments" enctype="multipart/form-data" class="inline-form wrap">
+        <input type="hidden" name="_csrf" value="{{.CSRF}}">
+        <select name="document_type">{{range .DocumentTypes}}<option value="{{.Code}}">{{.Name}}</option>{{end}}</select>
+        <input type="file" name="file" required>
+        <button class="btn btn-dark" type="submit">Tải lên</button>
+      </form>
+      <p class="hint">Cho phép ảnh, PDF, Excel, Word, CSV, ZIP, MP4 · tối đa 10 MB.</p>
+      {{end}}
+    </section>
+
+    <section class="card">
+      <div class="card-head"><div><h2>Biên bản thẩm định</h2></div></div>
+      {{if .Reviews}}
+      {{range .Reviews}}
+      <div class="review">
+        <div class="review-head"><strong>{{.StageName}} · {{.ReviewerName}}</strong><span class="tag {{if eq .Decision "APPROVE"}}tag-green{{else if eq .Decision "REJECT"}}tag-rose{{else}}tag-amber{{end}}">{{if eq .Decision "APPROVE"}}Đồng ý{{else if eq .Decision "REJECT"}}Từ chối{{else}}Cần bổ sung{{end}}</span></div>
+        <p class="pre">{{.Comment}}</p>
+        {{if .AssessedNetVND.Valid}}<p class="review-money">Net: <b>{{money .AssessedNetVND.Int64}}</b> · Mức: <b>{{.RewardTierName.String}}</b> · Thưởng: <b>{{money .RewardAmountVND.Int64}}</b></p>{{end}}
+        <small>{{dateTime .CreatedAt}}</small>
+      </div>
+      {{end}}
+      {{else}}<p class="muted">Chưa có biên bản.</p>{{end}}
+    </section>
+
+    <section class="card">
+      <div class="card-head"><div><h2>Lịch sử trạng thái</h2><p class="muted">Append-only · không sửa/xóa.</p></div></div>
+      <ol class="timeline">
+        {{range .History}}
+        <li><span class="dot"></span><div><strong>{{.ActionCode}}</strong>{{if ne .FromStage .ToStage}} · {{.FromName}} → {{.ToName}}{{end}}<small>{{.ChangedName}} · {{dateTime .CreatedAt}}</small>{{if .Note}}<p>{{.Note}}</p>{{end}}</div></li>
+        {{else}}<li>Chưa có lịch sử.</li>{{end}}
+      </ol>
+    </section>
+  </div>
+
+  <aside class="detail-side">
+    {{if .CanEdit}}
+    <section class="card action-card">
+      <h2>Hồ sơ nháp</h2>
+      <p class="muted">Bổ sung tài liệu/đồng tác giả trước khi nộp. Sau khi nộp, hồ sơ khóa chỉnh sửa.</p>
+      <form method="post" action="/initiatives/{{$i.ID}}/submit">
+        <input type="hidden" name="_csrf" value="{{.CSRF}}">
+        <button class="btn btn-safety btn-block" type="submit">{{icon "arrow"}} Nộp hồ sơ</button>
+      </form>
+    </section>
+    {{end}}
+
+    {{if .CanAct}}
+    <section class="card action-card">
+      <div class="card-head"><div><h2>{{.ActLabel}}</h2><p class="muted">Bước hiện tại: {{$i.StageName}}</p></div></div>
+      <form method="post" action="/initiatives/{{$i.ID}}/review">
+        <input type="hidden" name="_csrf" value="{{.CSRF}}">
+        {{if eq $i.StageCode "REVIEW"}}
+        <div class="form-grid compact">
+          <label>Tiết kiệm 12 tháng (A)<input name="gross_value" inputmode="numeric" value="{{$i.GrossValueVND}}"></label>
+          <label>Chi phí đầu tư (B)<input name="invest_cost" inputmode="numeric" value="{{$i.InvestCostVND}}"></label>
+          <label>Cơ sở thưởng<select name="reward_basis"><option value="FINANCIAL" {{if eq $i.RewardBasis "FINANCIAL"}}selected{{end}}>Tài chính — khung 7 mức</option><option value="NONFINANCIAL" {{if eq $i.RewardBasis "NONFINANCIAL"}}selected{{end}}>Phi tài chính — Mục 5.2</option></select></label>
+          <label>Cấp phi tài chính<select name="nonfinancial_level"><option value="0">— không áp dụng —</option><option value="1" {{if eq $i.NonFinancialLevel 1}}selected{{end}}>Mức 1 · 1.000.000đ</option><option value="2" {{if eq $i.NonFinancialLevel 2}}selected{{end}}>Mức 2 · 3.000.000đ</option><option value="3" {{if eq $i.NonFinancialLevel 3}}selected{{end}}>Mức 3 · 8.000.000đ</option><option value="4" {{if eq $i.NonFinancialLevel 4}}selected{{end}}>Mức 4 · 25.000.000đ</option></select></label>
+          <label class="check span2"><input type="checkbox" name="annex03" value="1" {{if $i.Annex03}}checked{{end}}> Thuộc Phụ lục 03 — nhân 1.2x</label>
+        </div>
+        <div class="calc-box compact"><div><span>Khung hiện tại</span><strong>{{$i.RewardTierName}}</strong></div><small>{{money $i.RewardAmountVND}}</small></div>
+        {{end}}
+
+        {{if eq $i.StageCode "APPROVE"}}
+        <div class="calc-box compact"><div><span>Mức thưởng đề xuất</span><strong>{{$i.RewardTierName}}</strong></div><small>{{money $i.RewardAmountVND}}</small></div>
+        <label>Điều chỉnh số tiền (tùy chọn, ≤ 100 Tr)<input name="override_reward" inputmode="numeric" placeholder="Để trống = giữ mức đề xuất"></label>
+        {{end}}
+
+        {{if eq $i.StageCode "IMPLEMENT"}}
+        <label>Trạng thái triển khai thực tế<select name="implementation_status">{{range .ImplementationStatuses}}<option value="{{.Code}}" {{if eq .Code $i.ImplementationStatusCode}}selected{{end}}>{{.Name}}</option>{{end}}</select></label>
+        <p class="hint">Xác nhận này đồng thời ghi nhận đã chi trả và chuyển hồ sơ sang bước Vinh danh.</p>
+        {{end}}
+
+        <label>Ý kiến thẩm định<textarea name="comment" rows="3" placeholder="Xác nhận số liệu SCADA/CEMS/trạm cân, điều kiện áp dụng…"></textarea></label>
+        <div class="action-stack">
+          <button class="btn btn-safety btn-block" type="submit" name="decision" value="APPROVE">{{icon "check"}} {{if eq $i.StageCode "IMPLEMENT"}}Xác nhận triển khai &amp; chi trả{{else}}Duyệt chuyển bước{{end}}</button>
+          <button class="btn btn-ghost btn-block" type="submit" name="decision" value="NEED_INFO">Yêu cầu bổ sung</button>
+          <button class="btn btn-danger btn-block" type="submit" name="decision" value="REJECT">Từ chối hồ sơ</button>
+        </div>
+      </form>
+    </section>
+    {{else}}
+      {{if .SelfReview}}
+      <section class="card action-card"><h2>Kiểm soát xung đột lợi ích</h2><p class="warning">Bạn là người nộp hồ sơ. Hệ thống không cho phép bạn tự thẩm định/phê duyệt; cần người có thẩm quyền khác xử lý.</p></section>
+      {{end}}
+    {{end}}
+
+    <section class="card">
+      <div class="card-head"><div><h2>Tóm tắt trạng thái</h2></div></div>
+      <dl class="kv">
+        <dt>Luồng</dt><dd>{{$i.TrackName}}</dd>
+        <dt>Bước</dt><dd>{{$i.StageName}}</dd>
+        <dt>Trạng thái</dt><dd>{{if eq $i.RecordStatus "OPEN"}}Đang mở{{else if eq $i.RecordStatus "REJECTED"}}Từ chối{{else}}Đã đóng{{end}}</dd>
+        <dt>Ngày nộp</dt><dd>{{if $i.SubmittedAt.Valid}}{{dateTime $i.SubmittedAt.String}}{{else}}Chưa nộp{{end}}</dd>
+        <dt>Hạn SLA</dt><dd>{{if $i.DueAt.Valid}}{{dateTime $i.DueAt.String}}{{else}}—{{end}}</dd>
+        <dt>Chi trả</dt><dd>{{if $i.PaidAt.Valid}}{{dateTime $i.PaidAt.String}}{{if $i.PaidByName.Valid}} · {{$i.PaidByName.String}}{{end}}{{else}}Chưa chi trả{{end}}</dd>
+        <dt>Tài liệu</dt><dd>{{$i.AttachmentCount}}</dd>
+      </dl>
+    </section>
+  </aside>
+</div>
+{{template "foot" .}}{{end}}

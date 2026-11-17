@@ -1,0 +1,27 @@
+{{define "mfa_verify"}}<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>Xác thực MFA · Chinfon Kaizen 360</title><link rel="stylesheet" href="/static/app.css"></head>
+<body class="auth-body">
+<div class="mfa-wrap narrow">
+  <div class="mfa-head">
+    <div class="brand-mark">CF</div>
+    <div><strong>CHINFON KAIZEN 360</strong><span>Bảo mật hai lớp · TOTP</span></div>
+    <form method="post" action="/logout" class="mfa-logout"><input type="hidden" name="_csrf" value="{{.CSRF}}"><button class="btn btn-ghost btn-sm" type="submit">{{icon "logout"}} Đăng xuất</button></form>
+  </div>
+
+  <div class="mfa-card">
+    <div class="mfa-steps"><span class="done">1</span><i></i><span class="done">2</span><i></i><span class="active">3</span></div>
+    <h1>Nhập mã xác thực</h1>
+    <p class="muted">Tài khoản <b>{{.User.FullName}}</b> ({{.User.EmployeeNo}}). Mở ứng dụng xác thực và nhập mã 6 số hiện tại.</p>
+    {{if .Error}}<div class="flash error">{{icon "alert"}}<span>{{.Error}}</span></div>{{end}}
+    <form method="post" action="/mfa/verify" class="mfa-form">
+      <input type="hidden" name="_csrf" value="{{.CSRF}}">
+      <label>Mã 6 số
+        <input class="code-input" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required autofocus placeholder="000000">
+      </label>
+      <button class="btn btn-safety btn-block" type="submit">{{icon "shield"}} Xác thực</button>
+    </form>
+    <p class="auth-note">Mã hiện tại còn khoảng {{.MFARemaining}} giây. Mỗi mã chỉ dùng một lần.</p>
+  </div>
+  <p class="mfa-foot">Mất điện thoại hoặc ứng dụng? Liên hệ ADMIN để reset MFA. Không dùng chung mã với người khác.</p>
+</div>
+</body></html>{{end}}

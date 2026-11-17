@@ -1,0 +1,43 @@
+{{define "mfa_setup"}}<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>Thiết lập MFA · Chinfon Kaizen 360</title><link rel="stylesheet" href="/static/app.css"></head>
+<body class="auth-body">
+<div class="mfa-wrap">
+  <div class="mfa-head">
+    <div class="brand-mark">CF</div>
+    <div><strong>CHINFON KAIZEN 360</strong><span>Bảo mật hai lớp · TOTP</span></div>
+    <form method="post" action="/logout" class="mfa-logout"><input type="hidden" name="_csrf" value="{{.CSRF}}"><button class="btn btn-ghost btn-sm" type="submit">{{icon "logout"}} Đăng xuất</button></form>
+  </div>
+
+  <div class="mfa-card">
+    <div class="mfa-steps"><span class="done">1</span><i></i><span class="active">2</span><i></i><span>3</span></div>
+    <h1>Thiết lập xác thực hai lớp</h1>
+    <p class="muted">Xin chào <b>{{.User.FullName}}</b> ({{.User.EmployeeNo}}). Quét mã QR bằng Google Authenticator, Microsoft Authenticator, Authy hoặc ứng dụng TOTP tương đương.</p>
+    {{if .Error}}<div class="flash error">{{icon "alert"}}<span>{{.Error}}</span></div>{{end}}
+
+    <div class="mfa-grid">
+      <div class="mfa-qr">
+        <img src="/mfa/qr.png" alt="QR TOTP" width="240" height="240">
+        <small>Quét bằng ứng dụng xác thực</small>
+      </div>
+      <div class="mfa-manual">
+        <span>Hoặc nhập thủ công</span>
+        <p>Tài khoản: <b>{{.User.EmployeeNo}}</b></p>
+        <p>Khóa bí mật:</p>
+        <code class="secret">{{.MFASecret}}</code>
+        <p class="hint">Thuật toán SHA1 · 6 chữ số · 30 giây. Không chia sẻ khóa này.</p>
+        <details><summary>URI otpauth</summary><code class="uri">{{.MFAURI}}</code></details>
+      </div>
+    </div>
+
+    <form method="post" action="/mfa/setup" class="mfa-form">
+      <input type="hidden" name="_csrf" value="{{.CSRF}}">
+      <label>Nhập mã 6 số từ ứng dụng để xác nhận
+        <input class="code-input" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required autofocus placeholder="000000">
+      </label>
+      <button class="btn btn-safety btn-block" type="submit">{{icon "shield"}} Bật MFA &amp; vào hệ thống</button>
+    </form>
+    <p class="auth-note">Mã hiện tại còn khoảng {{.MFARemaining}} giây. Nếu đồng hồ điện thoại sai, mã sẽ không khớp.</p>
+  </div>
+  <p class="mfa-foot">Không có ứng dụng xác thực? Liên hệ ADMIN để được reset MFA.</p>
+</div>
+</body></html>{{end}}

@@ -1,0 +1,30 @@
+{{define "opl"}}{{template "head" .}}{{template "sidebar" .}}{{template "topbar" .}}
+<section class="card">
+  <div class="card-head">
+    <div><h2>Phụ lục 03 — Danh mục chủ đề trọng tâm 2026–2027</h2><p class="muted">Sáng kiến đã triển khai thực tế, sẵn sàng nhân rộng Hải Phòng – Hiệp Phước – Chi nhánh.</p></div>
+    <span class="tag tag-amber">Hệ số 1.2x</span>
+  </div>
+  <p class="hint">OPL (One Point Lesson) được tạo từ Problem/Solution của hồ sơ đã nghiệm thu. Bấm “Mở hồ sơ” để xem bằng chứng và biên bản.</p>
+</section>
+
+{{if .OPL}}
+<div class="opl-grid">
+  {{range .OPL}}
+  <article class="card opl-card">
+    <div class="opl-head"><span class="code">{{.Code}}</span><span class="tag tag-sky">{{.DepartmentName}}</span></div>
+    <h3>{{.Title}}</h3>
+    <div class="beforeafter">
+      <div class="before"><span>❌ Trước cải tiến</span><p>{{.ProblemSummary}}</p></div>
+      <div class="after"><span>✅ Sau cải tiến</span><p>{{.SolutionSummary}}</p></div>
+    </div>
+    <div class="opl-foot">
+      <div><small>Làm lợi ròng</small><strong class="ok-text">{{money .NetBenefitVND}}</strong><small>{{.RewardTierName}} · {{money .RewardAmountVND}}</small></div>
+      <a class="btn btn-dark" href="/initiatives/{{.ID}}">Mở hồ sơ</a>
+    </div>
+  </article>
+  {{end}}
+</div>
+{{else}}
+<section class="card"><p class="empty">Chưa có sáng kiến nào được đánh dấu “Đã áp dụng thực tế”.</p></section>
+{{end}}
+{{template "foot" .}}{{end}}

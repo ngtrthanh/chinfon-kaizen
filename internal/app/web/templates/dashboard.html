@@ -1,0 +1,120 @@
+{{define "dashboard"}}{{template "head" .}}{{template "sidebar" .}}{{template "topbar" .}}
+{{if .User.DemoMode}}
+<section class="demo-banner">
+  <div><span class="tag tag-amber">DEMO MODE</span><strong>Đang hiển thị dữ liệu minh họa.</strong><p>Import danh sách nhân sự để chuyển sang chế độ vận hành: mỗi người đăng nhập tài khoản riêng và chỉ thấy dữ liệu theo vai trò.</p></div>
+  {{if hasPerm .User "rbac:admin"}}<a class="btn btn-dark" href="/admin?tab=staff">Import nhân sự</a>{{end}}
+</section>
+{{end}}
+<section class="kpis">
+  <article class="kpi">
+    <div class="kpi-head"><span>Làm lợi ròng</span>{{icon "coins"}}</div>
+    <p class="kpi-value">{{shortMoney .Stats.NetVND}}</p>
+    <p class="kpi-note">Tổng Net Benefit của hồ sơ bạn được xem</p>
+  </article>
+  <article class="kpi">
+    <div class="kpi-head"><span>Hồ sơ đang mở</span>{{icon "flow"}}</div>
+    <p class="kpi-value">{{.Stats.Open}}</p>
+    <p class="kpi-note">{{.Stats.Total}} hồ sơ trong phạm vi</p>
+  </article>
+  <article class="kpi">
+    <div class="kpi-head"><span>Thưởng đã duyệt</span>{{icon "trophy"}}</div>
+    <p class="kpi-value">{{shortMoney .Stats.RewardApproved}}</p>
+    <p class="kpi-note">Đã chi trả: {{shortMoney .Stats.RewardPaid}}</p>
+  </article>
+  <article class="kpi">
+    <div class="kpi-head"><span>Quá hạn SLA</span>{{icon "clock"}}</div>
+    <p class="kpi-value {{if gt .Stats.Overdue 0}}danger-text{{end}}">{{.Stats.Overdue}}</p>
+    <p class="kpi-note">Luồng 1: 48h · Luồng 2: 5 ngày làm việc</p>
+  </article>
+  <article class="kpi">
+    <div class="kpi-head"><span>Luồng 3 bảo mật</span>{{icon "lock"}}</div>
+    <p class="kpi-value">{{.Stats.Confidential}}</p>
+    <p class="kpi-note">Chỉ TGĐ &amp; Kiểm toán Nội bộ</p>
+  </article>
+</section>
+
+<div class="grid-2-1">
+  <section class="card">
+    <div class="card-head">
+      <div><h2>Làm lợi ròng theo 7 lĩnh vực trọng tâm</h2><p class="muted">Phụ lục 03 (2026–2027) · hệ số thưởng 1.2x</p></div>
+      <span class="tag tag-amber">1.2x</span>
+    </div>
+    {{if .Stats.Areas}}
+    <div class="bars">
+      {{range .Stats.Areas}}
+      <div class="bar-row">
+        <div class="bar-label"><span>{{.Name}}</span><strong>{{shortMoney .NetVND}}</strong></div>
+        <progress class="bar" value="{{.Pct}}" max="100"></progress>
+      </div>
+      {{end}}
+    </div>
+    {{else}}<p class="empty">Chưa có dữ liệu làm lợi.</p>{{end}}
+  </section>
+
+  <section class="card">
+    <div class="card-head"><div><h2>Bảng vàng thi đua</h2><p class="muted">Xếp hạng theo Net Benefit trong phạm vi</p></div></div>
+    {{if .Stats.TopUnits}}
+    <ol class="ranking">
+      {{range $idx, $u := .Stats.TopUnits}}
+      <li><span class="rank">{{add $idx 1}}</span><div><strong>{{$u.Name}}</strong><small>{{$u.Count}} hồ sơ</small></div><b>{{shortMoney $u.NetVND}}</b></li>
+      {{end}}
+    </ol>
+    {{else}}<p class="empty">Chưa có hồ sơ.</p>{{end}}
+    <div class="callout">
+      <div><small>Nguyên tắc</small><strong>Chốt sổ ngày 25 · Hội đồng họp 26–30</strong></div>
+      <a class="btn btn-dark" href="/initiatives?status=OPEN">Mở hồ sơ</a>
+    </div>
+  </section>
+</div>
+
+<section class="card">
+  <div class="card-head"><div><h2>Dòng chảy 3-Track</h2><p class="muted">Luồng 1 thưởng nóng · Luồng 2 tiêu chuẩn · Luồng 3 bảo mật</p></div></div>
+  <div class="track-grid">
+    <div class="track-box fast"><strong>⚡ Luồng 1 — Thưởng nóng 48h</strong><span>{{index .Stats.Tracks "FAST48"}} hồ sơ</span><small>Sự cố, đại tu, Kaizen &lt; 20 Tr</small></div>
+    <div class="track-box standard"><strong>⚙️ Luồng 2 — Tiêu chuẩn</strong><span>{{index .Stats.Tracks "STANDARD"}} hồ sơ</span><small>Nghiệm thu 30 ngày, chốt sổ 25</small></div>
+    <div class="track-box secret"><strong>🛡️ Luồng 3 — Bảo mật</strong><span>{{index .Stats.Tracks "CONFIDENTIAL"}} hồ sơ</span><small>Chuyển thẳng TGĐ &amp; KTNB</small></div>
+  </div>
+  <div class="stage-strip">
+    <div><span>Nháp</span><strong>{{index .Stats.Stages "DRAFT"}}</strong></div>
+    <div><span>Xác nhận</span><strong>{{index .Stats.Stages "SCREEN"}}</strong></div>
+    <div><span>Thẩm định</span><strong>{{index .Stats.Stages "REVIEW"}}</strong></div>
+    <div><span>Phê duyệt</span><strong>{{index .Stats.Stages "APPROVE"}}</strong></div>
+    <div><span>Triển khai</span><strong>{{index .Stats.Stages "IMPLEMENT"}}</strong></div>
+    <div><span>Đã chi trả</span><strong>{{index .Stats.Stages "APPLIED"}}</strong></div>
+  </div>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <div class="card-head"><div><h2>Hồ sơ gần nhất</h2><p class="muted">Cập nhật mới nhất trong phạm vi của bạn</p></div><a class="link" href="/initiatives">Xem tất cả</a></div>
+    {{if .Stats.Recent}}
+    <div class="list">
+      {{range .Stats.Recent}}
+      <a class="list-item" href="/initiatives/{{.ID}}">
+        <div class="list-main"><span class="code">{{.Code}}</span><strong>{{.Title}}</strong><small>{{.DepartmentName}} · {{.SubmitterName}}</small></div>
+        <div class="list-side"><span class="tag tag-{{if eq .TrackCode "CONFIDENTIAL"}}rose{{else if eq .TrackCode "FAST48"}}amber{{else}}sky{{end}}">{{if eq .TrackCode "CONFIDENTIAL"}}Mật{{else if eq .TrackCode "FAST48"}}48h{{else}}Chuẩn{{end}}</span><b>{{shortMoney .NetBenefitVND}}</b></div>
+      </a>
+      {{end}}
+    </div>
+    {{else}}<p class="empty">Chưa có hồ sơ.</p>{{end}}
+  </section>
+
+  <section class="card">
+    <div class="card-head"><div><h2>Cảnh báo quá hạn</h2><p class="muted">SLA tính từ lúc nộp hồ sơ</p></div></div>
+    {{if .Stats.OverdueList}}
+    <div class="list">
+      {{range .Stats.OverdueList}}
+      <a class="list-item warn" href="/initiatives/{{.ID}}">
+        <div class="list-main"><span class="code">{{.Code}}</span><strong>{{.Title}}</strong><small>Hạn: {{dateTime .DueAt.String}} · {{.StageName}}</small></div>
+        <span class="tag tag-rose">Quá hạn</span>
+      </a>
+      {{end}}
+    </div>
+    {{else}}<p class="empty">Không có hồ sơ quá hạn. Tốt.</p>{{end}}
+    <div class="quick">
+      <a class="btn btn-ghost" href="/initiatives/new?track=FAST48">⚡ Nộp thưởng nóng</a>
+      <a class="btn btn-ghost" href="/initiatives/new?track=CONFIDENTIAL">🛡️ Kênh bảo mật</a>
+    </div>
+  </section>
+</div>
+{{template "foot" .}}{{end}}

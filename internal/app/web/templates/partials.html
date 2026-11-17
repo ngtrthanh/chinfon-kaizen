@@ -1,0 +1,88 @@
+{{define "head"}}
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>{{.Title}} · Chinfon Kaizen 360</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<div class="app">
+{{end}}
+
+{{define "sidebar"}}
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <div class="brand-mark">CF</div>
+    <div class="brand-text">
+      <strong>CHINFON KAIZEN</strong>
+      <span>PN-B0000-02 · v2026</span>
+    </div>
+  </div>
+  <div class="scope-box">
+    <div class="scope-line"><span>Hải Phòng • Hiệp Phước • CN</span><span class="live"><i></i>Live</span></div>
+    <div class="scope-meta"><span>Phạm vi: {{if eq .User.Scope "ALL"}}Toàn công ty{{else}}{{.User.Scope}}{{end}}</span><span>Chốt sổ 25</span></div>
+  </div>
+  <nav class="nav">
+    <p class="nav-label">Phân hệ</p>
+    <a class="nav-item {{if eq .Active "dashboard"}}active{{end}}" href="/">{{icon "dashboard"}}<span>Tổng quan điều hành</span></a>
+    <a class="nav-item {{if eq .Active "initiatives"}}active{{end}}" href="/initiatives">{{icon "flow"}}<span>Hồ sơ & 3-Track</span></a>
+    <a class="nav-item {{if eq .Active "new"}}active{{end}}" href="/initiatives/new">{{icon "plus"}}<span>Nộp Phụ lục 01</span></a>
+    <a class="nav-item {{if eq .Active "opl"}}active{{end}}" href="/opl">{{icon "book"}}<span>Phụ lục 03 & OPL</span></a>
+    {{if hasPerm .User "hr:payroll:export"}}<a class="nav-item {{if eq .Active "rewards"}}active{{end}}" href="/rewards">{{icon "coins"}}<span>Khung 7 mức & HRD</span></a>{{end}}
+    {{if hasPerm .User "rbac:admin"}}<a class="nav-item {{if eq .Active "admin"}}active{{end}}" href="/admin">{{icon "settings"}}<span>Cài đặt & RBAC</span></a>{{end}}
+    <p class="nav-label">Tài khoản</p>
+    <a class="nav-item {{if eq .Active "account"}}active{{end}}" href="/account">{{icon "shield"}}<span>Tài khoản & bảo mật</span></a>
+  </nav>
+  <div class="sidebar-foot">
+    <div class="mini-user">
+      <span class="avatar">{{initial .User.FullName}}</span>
+      <div><strong>{{.User.FullName}}</strong><small>{{.User.EmployeeNo}} · {{.User.DepartmentName}}</small></div>
+    </div>
+    <form method="post" action="/logout">
+      <input type="hidden" name="_csrf" value="{{.CSRF}}">
+      <button class="btn btn-ghost btn-block" type="submit">{{icon "logout"}} Đăng xuất</button>
+    </form>
+  </div>
+</aside>
+<div class="scrim" data-close-sidebar></div>
+{{end}}
+
+{{define "topbar"}}
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="icon-btn mobile-only" type="button" data-toggle-sidebar aria-label="Mở menu">{{icon "flow"}}</button>
+      <div>
+        <h1 class="page-title">{{.Title}}</h1>
+        <p class="page-subtitle">{{.Subtitle}}</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      {{if .User.DemoMode}}<span class="tag tag-amber">DEMO</span>{{end}}
+      <div class="role-chips">
+        {{range .User.Roles}}<span class="role-chip role-{{.}}">{{.}}</span>{{end}}
+      </div>
+      <a class="btn btn-safety" href="/initiatives/new">{{icon "plus"}} <span>Nộp hồ sơ</span></a>
+      <a class="avatar" href="/account" title="Tài khoản">{{initial .User.FullName}}</a>
+    </div>
+  </header>
+  {{template "flash" .}}
+  <main class="page">
+{{end}}
+
+{{define "flash"}}
+{{if .Message}}<div class="flash ok" role="status">{{icon "check"}}<span>{{.Message}}</span></div>{{end}}
+{{if .Error}}<div class="flash error" role="alert">{{icon "alert"}}<span>{{.Error}}</span></div>{{end}}
+{{end}}
+
+{{define "foot"}}
+  </main>
+  <footer class="foot">Chinfon Kaizen 360° · PN-B0000-02 (2026) · Dữ liệu là nguồn sự thật duy nhất; báo cáo chỉ là đầu ra.</footer>
+</div>
+<script src="/static/app.js" defer></script>
+</body>
+</html>
+{{end}}

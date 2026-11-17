@@ -1,0 +1,95 @@
+{{define "form"}}{{template "head" .}}{{template "sidebar" .}}{{template "topbar" .}}
+{{$form := .Form}}
+<section class="card">
+  <div class="card-head">
+    <div><h2>{{if .Initiative}}Sửa hồ sơ nháp {{.Initiative.Code}}{{else}}Phụ lục 01 — Đăng ký sáng kiến 30 giây{{end}}</h2><p class="muted">Khai báo Thực trạng – Giải pháp – Lợi ích. Hệ thống tự phân luồng và áp SLA.</p></div>
+    <span class="tag tag-sky">PN-B0000-02-E01</span>
+  </div>
+  <form method="post" action="{{if .Initiative}}/initiatives/{{.Initiative.ID}}/edit{{else}}/initiatives{{end}}" class="form">
+    <input type="hidden" name="_csrf" value="{{.CSRF}}">
+
+    <fieldset class="fieldset">
+      <legend>1. Chọn luồng xử lý</legend>
+      <div class="radio-cards">
+        <label class="radio-card {{if eq (index $form "track") "FAST48"}}selected{{end}}"><input type="radio" name="track" value="FAST48" {{if eq (index $form "track") "FAST48"}}checked{{end}}><span class="rc-icon">⚡</span><strong>Luồng 1 — Thưởng nóng</strong><small>Tối đa 48h; sự cố, đại tu, Kaizen &lt; 20 Tr</small></label>
+        <label class="radio-card {{if eq (index $form "track") "STANDARD"}}selected{{end}}"><input type="radio" name="track" value="STANDARD" {{if eq (index $form "track") "STANDARD"}}checked{{end}}><span class="rc-icon">⚙️</span><strong>Luồng 2 — Tiêu chuẩn</strong><small>Nghiệm thu 30 ngày, ≥ 20 Tr/năm, chốt sổ 25</small></label>
+        <label class="radio-card secret {{if eq (index $form "track") "CONFIDENTIAL"}}selected{{end}}"><input type="radio" name="track" value="CONFIDENTIAL" {{if eq (index $form "track") "CONFIDENTIAL"}}checked{{end}}><span class="rc-icon">🛡️</span><strong>Luồng 3 — Bảo mật</strong><small>Tố giác tham nhũng, gian lận; chuyển thẳng TGĐ &amp; KTNB</small></label>
+      </div>
+      <p class="hint">Luồng 3 bỏ qua Trưởng phòng/Giám đốc khối. Danh tính người nộp được bảo vệ; mọi lần truy cập đều ghi audit.</p>
+    </fieldset>
+
+    <div class="form-grid">
+      <label class="span2">Tiêu đề sáng kiến <span class="req">*</span><input name="title" maxlength="240" required value="{{index $form "title"}}" placeholder="Ví dụ: Tự chế tạo dàn phun khí nén giải nhiệt điểm đỏ vỏ lò 1K1"></label>
+
+      <label>Đơn vị / lĩnh vực <span class="req">*</span>
+        {{if eq .User.Scope "ALL"}}
+        <select name="department" required>{{range .Departments}}<option value="{{.Code}}" {{if eq (index $form "department") .Code}}selected{{end}}>{{.Name}}</option>{{end}}</select>
+        {{else}}
+        <input type="hidden" name="department" value="{{.User.DepartmentCode}}">
+        <span class="readonly">{{.User.DepartmentName}} · khóa theo phạm vi tài khoản</span>
+        {{end}}
+      </label>
+      <label>Mã thiết bị / địa điểm<input name="equipment" maxlength="120" value="{{index $form "equipment"}}" placeholder="1K1-KILN01, HP-MILL-01…"></label>
+
+      <label>Trạng thái triển khai <span class="req">*</span><select name="implementation_status" required>{{range .ImplementationStatuses}}<option value="{{.Code}}" {{if eq (index $form "implementation_status") .Code}}selected{{end}}>{{.Name}}</option>{{end}}</select></label>
+      <label>Tỷ lệ chia thưởng nhóm<input name="split_ratio" maxlength="240" value="{{index $form "split_ratio"}}" placeholder="60% Tác giả chính / 40% Đồng tác giả"><small>Khai báo trước để tránh tranh chấp sau nghiệm thu.</small></label>
+
+      <label class="span2">Thực trạng — tóm tắt <span class="req">*</span><input name="problem_summary" maxlength="500" required value="{{index $form "problem_summary"}}" placeholder="Vấn đề hiện tại, mức độ ảnh hưởng"></label>
+      <label class="span2">Thực trạng — chi tiết<textarea name="problem_detail" rows="4" required placeholder="Số liệu, thời điểm, thiết bị, điều kiện vận hành…">{{index $form "problem_detail"}}</textarea></label>
+
+      <label class="span2">Giải pháp — tóm tắt <span class="req">*</span><input name="solution_summary" maxlength="500" required value="{{index $form "solution_summary"}}" placeholder="Đã thay đổi điều gì, ở đâu, như thế nào"></label>
+      <label class="span2">Giải pháp — chi tiết<textarea name="solution_detail" rows="4" required placeholder="Thiết kế may đo, tự lập trình PLC/PID, tối ưu logic…">{{index $form "solution_detail"}}</textarea></label>
+
+      <label class="span2">Lợi ích — tóm tắt <span class="req">*</span><textarea name="benefit_summary" rows="3" required placeholder="Tiết kiệm/tăng thu 12 tháng, giờ công, an toàn, môi trường…">{{index $form "benefit_summary"}}</textarea></label>
+    </div>
+
+    <fieldset class="fieldset">
+      <legend>2. Phụ lục 02 — Giá trị làm lợi ròng (ước tính)</legend>
+      <div class="form-grid">
+        <label>Tiết kiệm / tăng thu 12 tháng (A) — VNĐ<input id="gross_value" name="gross_value" inputmode="numeric" value="{{index $form "gross_value"}}" placeholder="0"></label>
+        <label>Chi phí đầu tư &amp; lắp đặt (B) — VNĐ<input id="invest_cost" name="invest_cost" inputmode="numeric" value="{{index $form "invest_cost"}}" placeholder="0"></label>
+        <label class="check span2"><input type="checkbox" name="annex03" value="1" {{if eq (index $form "annex03") "1"}}checked{{end}}> Thuộc Phụ lục 03 — nhân hệ số <b>1.2x</b></label>
+      </div>
+      <div class="calc-box">
+        <div><span>Lợi ích ròng ước tính (A − B)</span><strong id="net-preview">0 VNĐ</strong></div>
+        <p>Khung 7 mức và hệ số 1.2x được chốt tại bước Thẩm định (Phụ lục 02). Hồ sơ nháp có thể chỉnh sửa.</p>
+      </div>
+    </fieldset>
+
+    <div class="form-actions">
+      {{if .Initiative}}
+      <button class="btn btn-dark" type="submit">{{icon "check"}} Lưu thay đổi</button>
+      <a class="btn btn-ghost" href="/initiatives/{{.Initiative.ID}}">Hủy</a>
+      {{else}}
+      <button class="btn btn-ghost" type="submit" name="action" value="draft">Lưu nháp</button>
+      <button class="btn btn-safety" type="submit" name="action" value="submit">{{icon "arrow"}} Nộp hồ sơ</button>
+      {{end}}
+    </div>
+  </form>
+</section>
+
+{{if and .Initiative .CanEdit}}
+<section class="card">
+  <div class="card-head"><div><h2>Đồng tác giả &amp; tỷ lệ chia thưởng</h2><p class="muted">Người nộp mặc định nhận phần còn lại. Tổng đồng tác giả không vượt 100%.</p></div></div>
+  {{if .Participants}}
+  <ul class="files">
+    {{range .Participants}}
+    <li><strong>{{.FullName}}</strong> · {{.EmployeeNo}} · {{.SharePercent}}%<span>{{.RoleNote}}</span>
+      <form method="post" action="/initiatives/{{$.Initiative.ID}}/participants" class="inline-form">
+        <input type="hidden" name="_csrf" value="{{$.CSRF}}"><input type="hidden" name="action" value="remove"><input type="hidden" name="employee_no" value="{{.EmployeeNo}}">
+        <button class="btn btn-danger btn-sm" type="submit">Xóa</button>
+      </form>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}<p class="muted">Chưa có đồng tác giả. Người nộp nhận 100%.</p>{{end}}
+  <form method="post" action="/initiatives/{{.Initiative.ID}}/participants" class="inline-form wrap">
+    <input type="hidden" name="_csrf" value="{{.CSRF}}">
+    <select name="employee_no" required><option value="">Chọn nhân viên…</option>{{range .Employees}}<option value="{{.EmployeeNo}}">{{.FullName}} — {{.DepartmentName}}</option>{{end}}</select>
+    <input name="share_percent" type="number" min="0.1" max="100" step="0.1" placeholder="Tỷ lệ %" required>
+    <input name="role_note" maxlength="120" placeholder="Vai trò (Đồng tác giả, KCS…)">
+    <button class="btn btn-dark" type="submit">{{icon "plus"}} Thêm</button>
+  </form>
+</section>
+{{end}}
+{{template "foot" .}}{{end}}

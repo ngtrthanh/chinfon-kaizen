@@ -1,0 +1,249 @@
+{{define "admin"}}{{template "head" .}}{{template "sidebar" .}}{{template "topbar" .}}
+<nav class="tabs">
+  <a class="tab {{if eq .Tab "master"}}active{{end}}" href="/admin?tab=master">Master data</a>
+  <a class="tab {{if eq .Tab "staff"}}active{{end}}" href="/admin?tab=staff">Nhân sự &amp; Import</a>
+  <a class="tab {{if eq .Tab "users"}}active{{end}}" href="/admin?tab=users">Người dùng &amp; vai trò</a>
+  <a class="tab {{if eq .Tab "rbac"}}active{{end}}" href="/admin?tab=rbac">Ma trận RBAC</a>
+  <a class="tab {{if eq .Tab "audit"}}active{{end}}" href="/admin?tab=audit">Audit log</a>
+</nav>
+
+{{if eq .Tab "master"}}
+<div class="grid-2">
+  <section class="card">
+    <div class="card-head"><div><h2>Đơn vị / lĩnh vực</h2><p class="muted">7 nhóm Phụ lục 03 + Ban Giám đốc + HRD.</p></div></div>
+    <div class="table-wrap">
+      <table class="table compact">
+        <thead><tr><th>Mã</th><th>Tên</th><th>Loại</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody>{{range .DepartmentMaster}}<tr><td><span class="code">{{.Code}}</span></td><td>{{.Name}}</td><td>{{.Kind}}</td><td>{{if .Active}}<span class="tag tag-green">Hoạt động</span>{{else}}<span class="tag tag-rose">Ngừng</span>{{end}}</td><td><form method="post" action="/admin/departments/{{.Code}}/toggle"><input type="hidden" name="_csrf" value="{{$.CSRF}}"><button class="btn btn-ghost btn-sm" type="submit">{{if .Active}}Ngừng{{else}}Bật{{end}}</button></form></td></tr>{{end}}</tbody>
+      </table>
+    </div>
+    <h3 class="subhead">Thêm / cập nhật đơn vị</h3>
+    <form method="post" action="/admin/departments" class="form-grid compact">
+      <input type="hidden" name="_csrf" value="{{.CSRF}}">
+      <label>Mã<input name="code" maxlength="20" placeholder="KILN" required></label>
+      <label>Tên<input name="name" maxlength="120" required></label>
+      <label>Loại<select name="kind"><option value="PLANT">PLANT</option><option value="SUPPORT">SUPPORT</option><option value="HRD">HRD</option><option value="BOD">BOD</option><option value="BRANCH">BRANCH</option></select></label>
+      <label>Thứ tự<input name="sort_order" type="number" value="100"></label>
+      <div class="span2"><button class="btn btn-dark" type="submit">{{icon "plus"}} Lưu đơn vị</button></div>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><div><h2>Nhân viên</h2><p class="muted">Nguồn nhân sự cho người nộp, tác giả và người nhận thưởng.</p></div></div>
+    <div class="table-wrap scroll">
+      <table class="table compact">
+        <thead><tr><th>Mã</th><th>Họ tên</th><th>Đơn vị</th><th>Chức danh</th><th>Nhóm/Tổ</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody>{{range .Employees}}<tr><td><span class="code">{{.EmployeeNo}}</span></td><td>{{.FullName}}</td><td>{{.DepartmentName}}</td><td>{{.PositionTitle}}</td><td>{{.WorkGroup}}</td><td>{{if .Active}}<span class="tag tag-green">Hoạt động</span>{{else}}<span class="tag tag-rose">Ngừng</span>{{end}}</td><td><form method="post" action="/admin/employees/{{.EmployeeNo}}/toggle"><input type="hidden" name="_csrf" value="{{$.CSRF}}"><button class="btn btn-ghost btn-sm" type="submit">{{if .Active}}Ngừng{{else}}Bật{{end}}</button></form></td></tr>{{end}}</tbody>
+      </table>
+    </div>
+    <h3 class="subhead">Thêm / cập nhật nhân viên</h3>
+    <form method="post" action="/admin/employees" class="form-grid compact">
+      <input type="hidden" name="_csrf" value="{{.CSRF}}">
+      <label>Mã nhân viên<input name="employee_no" maxlength="20" placeholder="CF-0412" required></label>
+      <label>Họ tên<input name="full_name" maxlength="120" required></label>
+      <label>Đơn vị<select name="department_code">{{range .Departments}}<option value="{{.Code}}">{{.Name}}</option>{{end}}</select></label>
+      <label>Chức danh<input name="position_title" maxlength="120"></label>
+      <label>Nhóm / Tổ<input name="work_group" maxlength="120" placeholder="Tổ Cơ khí, Ca A…"></label>
+      <div class="span2"><button class="btn btn-dark" type="submit">{{icon "plus"}} Lưu nhân viên</button></div>
+    </form>
+  </section>
+</div>
+{{end}}
+
+{{if eq .Tab "users"}}
+<section class="card">
+  <div class="card-head"><div><h2>Tạo tài khoản</h2><p class="muted">Mật khẩu tối thiểu 10 ký tự, băm PBKDF2-SHA256. Không có mật khẩu mặc định.</p></div></div>
+  <form method="post" action="/admin/users" class="form-grid">
+    <input type="hidden" name="_csrf" value="{{.CSRF}}">
+    <label>Tên đăng nhập<input name="username" maxlength="40" required></label>
+    <label>Nhân viên<select name="employee_no" required><option value="">Chọn…</option>{{range .Employees}}{{if .Active}}<option value="{{.EmployeeNo}}">{{.FullName}} — {{.DepartmentName}}</option>{{end}}{{end}}</select></label>
+    <label>Mật khẩu<input type="password" name="password" minlength="10" required autocomplete="new-password"></label>
+    <label>Phạm vi dữ liệu<select name="scope">{{range .Scopes}}<option value="{{.Code}}">{{.Name}}</option>{{end}}</select></label>
+    <div class="span2 roles-pick"><span class="label">Vai trò (cộng dồn quyền)</span>{{range .Roles}}<label class="check-inline"><input type="checkbox" name="roles" value="{{.Code}}"> {{.Code}} — {{.Name}}</label>{{end}}</div>
+    <div class="span2"><button class="btn btn-dark" type="submit">{{icon "plus"}} Tạo tài khoản</button></div>
+  </form>
+</section>
+
+<section class="card">
+  <div class="card-head"><div><h2>Tài khoản hiện có</h2><p class="muted">Cập nhật vai trò, phạm vi, trạng thái. Giữ ít nhất một ADMIN hoạt động.</p></div></div>
+  {{if .Users}}
+  <div class="user-list">
+    {{range .Users}}{{$row := .}}
+    <form method="post" action="/admin/users/{{.ID}}/update" class="user-row">
+      <input type="hidden" name="_csrf" value="{{$.CSRF}}">
+      <div class="user-ident"><strong>{{.Username}}</strong><small>{{.FullName}} · {{.EmployeeNo}} · tạo {{date .CreatedAt}}</small>{{if .MFAEnrolled}}<span class="tag tag-green">MFA</span>{{else}}<span class="tag tag-amber">Chưa MFA</span>{{end}}</div>
+      <label class="scope">Phạm vi<select name="scope">{{range $.Scopes}}<option value="{{.Code}}" {{if eq .Code $row.Scope}}selected{{end}}>{{.Name}}</option>{{end}}</select></label>
+      <div class="roles-pick compact">{{range $.Roles}}<label class="check-inline"><input type="checkbox" name="roles" value="{{.Code}}" {{if contains $row.Roles .Code}}checked{{end}}> {{.Code}}</label>{{end}}</div>
+      <label class="check-inline"><input type="checkbox" name="active" value="1" {{if .Active}}checked{{end}}> Hoạt động</label>
+      <div class="user-actions"><button class="btn btn-dark btn-sm" type="submit">Lưu</button><button class="btn btn-ghost btn-sm" type="submit" formaction="/admin/users/{{.ID}}/mfa-reset" formnovalidate>Reset MFA</button></div>
+    </form>
+    {{end}}
+  </div>
+  {{else}}<p class="empty">Chưa có tài khoản.</p>{{end}}
+</section>
+
+<section class="card">
+  <div class="card-head"><div><h2>Đặt lại mật khẩu</h2><p class="muted">Dành cho ADMIN. Thu hồi mọi phiên đăng nhập của tài khoản sau khi đặt lại.</p></div></div>
+  <div class="user-list">
+    {{range .Users}}
+    <form method="post" action="/admin/users/{{.ID}}/password" class="inline-form wrap">
+      <input type="hidden" name="_csrf" value="{{$.CSRF}}">
+      <strong class="mono">{{.Username}}</strong><span class="muted">{{.FullName}}</span>
+      <input type="password" name="new_password" minlength="10" placeholder="Mật khẩu mới ≥ 10 ký tự" required autocomplete="new-password">
+      <button class="btn btn-ghost" type="submit">{{icon "lock"}} Đặt lại</button>
+    </form>
+    {{end}}
+  </div>
+</section>
+{{end}}
+
+{{if eq .Tab "rbac"}}
+<section class="card">
+  <div class="card-head"><div><h2>Ma trận phân quyền cem-auth</h2><p class="muted">Bấm ô để cấp/thu quyền. Mọi thay đổi có hiệu lực ngay và được ghi audit.</p></div><span class="tag tag-rose">Admin only</span></div>
+  <div class="table-wrap">
+    <table class="table matrix">
+      <thead><tr><th>Quyền</th>{{range .Roles}}<th class="center">{{.Code}}<small>{{.Name}}</small></th>{{end}}</tr></thead>
+      <tbody>
+      {{range .Permissions}}{{$perm := .}}
+      <tr>
+        <td><span class="code">{{.Code}}</span><small>{{.Description}}</small></td>
+        {{range $.Roles}}{{$role := .}}
+        <td class="center">
+          <form method="post" action="/admin/rbac">
+            <input type="hidden" name="_csrf" value="{{$.CSRF}}">
+            <input type="hidden" name="role" value="{{$role.Code}}">
+            <input type="hidden" name="permission" value="{{$perm.Code}}">
+            {{if index (index $.Matrix $role.Code) $perm.Code}}
+            <input type="hidden" name="allow" value="0"><button class="matrix-btn on" type="submit" title="Thu hồi">✓</button>
+            {{else}}
+            <input type="hidden" name="allow" value="1"><button class="matrix-btn off" type="submit" title="Cấp quyền">✗</button>
+            {{end}}
+          </form>
+        </td>
+        {{end}}
+      </tr>
+      {{end}}
+      </tbody>
+    </table>
+  </div>
+  <p class="hint">Quyền <code>track:confidential:read</code> là cổng duy nhất mở Luồng 3. Không cấp cho cấp trung gian. Quyền <code>rbac:admin</code> của ADMIN không thể thu hồi.</p>
+</section>
+{{end}}
+
+{{if eq .Tab "audit"}}
+<section class="card">
+  <div class="card-head">
+    <div><h2>Audit log bất biến</h2><p class="muted">Đăng nhập, giải mật, thay đổi RBAC, tải file, xuất lương, chặn 403.</p></div>
+    <form class="inline-form" method="get" action="/admin"><input type="hidden" name="tab" value="audit"><input name="q" value="{{index .Filters "q"}}" placeholder="Lọc actor / action / target"><button class="btn btn-dark btn-sm" type="submit">Lọc</button></form>
+  </div>
+  {{if .Audit}}
+  <div class="table-wrap scroll">
+    <table class="table compact">
+      <thead><tr><th>Thời điểm</th><th>Actor</th><th>Hành động</th><th>Đối tượng</th><th>Kết quả</th><th>Chi tiết</th><th>IP</th></tr></thead>
+      <tbody>{{range .Audit}}<tr><td class="nowrap">{{dateTime .At}}</td><td><span class="code">{{.Actor}}</span></td><td><strong>{{.Action}}</strong></td><td>{{.Target}}</td><td>{{if or (eq .Status "200 OK") (eq .Status "201 CREATED")}}<span class="tag tag-green">{{.Status}}</span>{{else}}<span class="tag tag-rose">{{.Status}}</span>{{end}}</td><td class="wide">{{.Detail}}</td><td class="nowrap mono">{{.IP}}</td></tr>{{end}}</tbody>
+    </table>
+  </div>
+  {{else}}<p class="empty">Chưa có bản ghi audit.</p>{{end}}
+</section>
+{{end}}
+
+{{if eq .Tab "staff"}}
+{{if .User.DemoMode}}
+<div class="flash error">{{icon "alert"}}<span><b>Đang ở chế độ demo.</b> Dữ liệu minh họa đang hiển thị. Import nhân sự bên dưới sẽ tắt demo và ẩn toàn bộ hồ sơ cũ (nếu chọn).</span></div>
+{{else}}
+<div class="flash ok">{{icon "check"}}<span><b>Chế độ vận hành.</b> Mỗi người đăng nhập bằng tài khoản riêng; dữ liệu hiển thị theo vai trò và phạm vi. Dữ liệu demo đã bị ẩn.</span></div>
+{{end}}
+
+<section class="kpis three">
+  <article class="kpi"><div class="kpi-head"><span>Nhân sự</span>{{icon "users"}}</div><p class="kpi-value">{{.StaffCount}}</p><p class="kpi-note">Trong master data</p></article>
+  <article class="kpi"><div class="kpi-head"><span>Đã có tài khoản</span>{{icon "lock"}}</div><p class="kpi-value">{{.StaffAccountCount}}</p><p class="kpi-note">Còn {{.StaffMustChangeCount}} người phải đổi PIN/mật khẩu</p></article>
+  <article class="kpi"><div class="kpi-head"><span>Hội đồng ĐGKT</span>{{icon "trophy"}}</div><p class="kpi-value">{{if .HasCouncil}}Có{{else}}Chưa{{end}}</p><p class="kpi-note">{{if .HasCouncil}}Đã có tài khoản COUNCIL{{else}}Thêm ít nhất một thành viên Hội đồng{{end}}</p></article>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <div class="card-head"><div><h2>Bước 0 — Seed một đơn vị</h2><p class="muted">Ví dụ P81. Import cũng tự tạo đơn vị từ cột <code>dept_code</code> nếu chưa có.</p></div></div>
+    <form method="post" action="/admin/staff/department" class="form-grid compact">
+      <input type="hidden" name="_csrf" value="{{.CSRF}}">
+      <label>Mã đơn vị<input name="dept_code" value="P81" maxlength="20" required></label>
+      <label>Tên đơn vị<input name="dept_name" placeholder="Phòng Kỹ thuật 81" maxlength="120" required></label>
+      <div class="span2"><button class="btn btn-dark" type="submit">{{icon "plus"}} Tạo / cập nhật đơn vị</button></div>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><div><h2>Tạo tài khoản Hội đồng</h2><p class="muted">Thêm vai trò <code>COUNCIL</code>, phạm vi toàn công ty, không thấy Luồng 3.</p></div>{{if .HasCouncil}}<span class="tag tag-green">Đã có</span>{{end}}</div>
+    <form method="post" action="/admin/staff/council" class="form-grid compact">
+      <input type="hidden" name="_csrf" value="{{.CSRF}}">
+      <label class="span2">Nhân viên<select name="employee_no" required><option value="">Chọn nhân viên…</option>{{range .Employees}}{{if .Active}}<option value="{{.EmployeeNo}}">{{.FullName}} — {{.DepartmentName}}</option>{{end}}{{end}}</select></label>
+      <div class="span2"><button class="btn btn-safety" type="submit">{{icon "trophy"}} Cấp tài khoản Hội đồng</button></div>
+    </form>
+    <p class="hint">Tài khoản mới: PIN khởi tạo = 5 số cuối <code>mobile_num</code>, phải đổi mật khẩu lần đầu. Tài khoản đã tồn tại: giữ nguyên mật khẩu, chỉ thêm vai trò và mở phạm vi toàn công ty.</p>
+  </section>
+</div>
+
+<section class="card">
+  <div class="card-head">
+    <div><h2>Import nhân sự từ CSV</h2><p class="muted">Tạo/cập nhật nhân viên, đơn vị, tài khoản, vai trò và phạm vi trong một giao dịch.</p></div>
+    <div class="detail-actions"><a class="btn btn-ghost" href="/admin/staff/template.csv">{{icon "download"}} Template trống</a><a class="btn btn-ghost" href="/admin/staff/sample.csv">{{icon "download"}} CSV mẫu 10 dòng</a><a class="btn btn-ghost" href="/admin/staff/export.csv">{{icon "download"}} Xuất danh sách</a></div>
+  </div>
+  <form method="post" action="/admin/staff/import" enctype="multipart/form-data" class="form">
+    <input type="hidden" name="_csrf" value="{{.CSRF}}">
+    <div class="form-grid">
+      <label>File CSV (UTF-8, tối đa 8 MB)<input type="file" name="file" accept=".csv,text/csv" required></label>
+      <div class="stack-check">
+        <label class="check"><input type="checkbox" name="hide_demo" value="1" checked> Ẩn toàn bộ hồ sơ hiện có dưới nhãn demo khi tắt demo mode</label>
+        <label class="check"><input type="checkbox" name="reset_pin" value="1"> Reset PIN khởi tạo cho tài khoản đã tồn tại (5 số cuối mobile)</label>
+      </div>
+    </div>
+    <p class="hint">Excel: <b>File → Save As → CSV UTF-8</b>. Giữ các cột <code>emp_id</code>, <code>mobile_num</code>, <code>seed_pin</code> ở định dạng <b>Text</b> để không mất số 0 đầu. Dùng dấu phẩy, chấm phẩy hoặc tab đều được. <b>Dòng hợp lệ vẫn được import; dòng lỗi bị bỏ qua và liệt kê bên dưới.</b> Với mỗi <code>emp_id</code> có trong file, vai trò và phạm vi được thay thế hoàn toàn. Thiếu <code>mobile_num</code> được chấp nhận: nhân sự vẫn được import, tài khoản sẽ tạo khi bổ sung mobile và import lại.</p>
+    <div class="form-actions"><button class="btn btn-safety" type="submit">{{icon "arrow"}} Import nhân sự &amp; tắt demo</button></div>
+  </form>
+</section>
+
+{{if .ImportResult}}
+<section class="card">
+  <div class="card-head"><div><h2>Kết quả import</h2><p class="muted">{{.ImportResult.Notice}}</p></div>{{if .ImportResult.Errors}}{{if gt .ImportResult.EmployeesUpserted 0}}<span class="tag tag-amber">Import một phần</span>{{else}}<span class="tag tag-rose">Có lỗi</span>{{end}}{{else}}<span class="tag tag-green">Thành công</span>{{end}}</div>
+  {{if .ImportResult.Total}}<div class="facts"><div><span>Tổng dòng dữ liệu</span><strong>{{.ImportResult.Total}}</strong></div><div><span>Dòng bỏ qua</span><strong>{{.ImportResult.SkippedRows}}</strong></div><div><span>Đơn vị</span><strong>{{.ImportResult.Departments}}</strong></div><div><span>Tài khoản mới</span><strong>{{.ImportResult.UsersCreated}}</strong></div><div><span>Tài khoản cập nhật</span><strong>{{.ImportResult.UsersUpdated}}</strong></div><div><span>Chưa tạo TK (thiếu mobile)</span><strong>{{.ImportResult.AccountsSkipped}}</strong></div></div>{{end}}
+  {{if .ImportResult.Errors}}
+  <div class="table-wrap"><table class="table compact"><thead><tr><th>Dòng</th><th>emp_id</th><th>Lỗi</th></tr></thead><tbody>{{range .ImportResult.Errors}}<tr><td>{{.Row}}</td><td><span class="code">{{.EmpID}}</span></td><td>{{.Reason}}</td></tr>{{end}}</tbody></table></div>
+  {{end}}
+</section>
+{{end}}
+
+<section class="card">
+  <div class="card-head"><div><h2>Định dạng file</h2><p class="muted">Các cột bắt buộc: <code>emp_id</code>, <code>name</code>, <code>dept_code</code>. Các cột còn lại có thể để trống.</p></div><span class="tag tag-sky">CSV UTF-8</span></div>
+  <div class="table-wrap">
+    <table class="table compact">
+      <thead><tr><th>Cột</th><th>Bắt buộc</th><th>Quy tắc</th></tr></thead>
+      <tbody>
+        <tr><td><span class="code">emp_id</span></td><td>Có</td><td>Mã nhân viên duy nhất, cũng là username đăng nhập (ví dụ P81-0001).</td></tr>
+        <tr><td><span class="code">name</span></td><td>Có</td><td>Họ tên, tối đa 120 ký tự.</td></tr>
+        <tr><td><span class="code">job_title</span></td><td>Không</td><td>Chức danh / vị trí công việc, tối đa 120 ký tự.</td></tr>
+        <tr><td><span class="code">dept_code</span></td><td>Có</td><td>Mã đơn vị, ví dụ P81. Đơn vị được tạo tự động nếu chưa có.</td></tr>
+        <tr><td><span class="code">dept_name</span></td><td>Không</td><td>Tên đơn vị. Để trống sẽ dùng dept_code nếu đơn vị mới.</td></tr>
+        <tr><td><span class="code">report_to</span></td><td>Không</td><td>Mã người quản lý trực tiếp (lưu để tra cứu).</td></tr>
+        <tr><td><span class="code">e_mail</span></td><td>Không</td><td>Có thể trống; nếu có phải đúng định dạng email.</td></tr>
+        <tr><td><span class="code">mobile_num</span></td><td>Không*</td><td>5–15 chữ số. Cần để tạo tài khoản/PIN; nếu trống vẫn import nhân sự nhưng chưa tạo tài khoản.</td></tr>
+        <tr><td><span class="code">seed_pin</span></td><td>Không</td><td>Nếu điền phải đúng 5 số cuối mobile. Không lưu PIN trong CSDL.</td></tr>
+        <tr><td><span class="code">role</span></td><td>Không</td><td>Mặc định employee. Nhiều vai trò cách nhau bởi <code>|</code>: employee, supervisor, manager, director, council, hr, ceo, admin.</td></tr>
+        <tr><td><span class="code">group</span></td><td>Không</td><td>Nhóm / tổ / ca làm việc, tối đa 120 ký tự (ví dụ <code>Tổ Cơ khí</code>, <code>Ca A</code>).</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="hint">Ví dụ: <code>P81-0001,Nguyễn Văn A,Kỹ sư Cơ khí,P81,Phòng Kỹ thuật 81,P81-0000,a@chinfon.com,0912345678,,employee,Tổ Cơ khí</code><br>Thành viên Hội đồng: <code>P81-0009,Trần Thị B,Thành viên HĐ,P81,Phòng Kỹ thuật 81,P81-0000,,0909876543,,council,Hội đồng ĐGKT</code></p>
+</section>
+
+<section class="card">
+  <div class="card-head"><div><h2>Danh sách nhân sự</h2><p class="muted">Tối đa 5.000 dòng. Tài khoản <b>PIN tạm</b> phải đổi mật khẩu khi đăng nhập lần đầu.</p></div></div>
+  {{if .Staff}}
+  <div class="table-wrap scroll tall">
+    <table class="table compact">
+      <thead><tr><th>emp_id</th><th>Họ tên</th><th>Chức danh</th><th>Đơn vị</th><th>report_to</th><th>Email</th><th>Mobile</th><th>Nhóm/Tổ</th><th>Vai trò</th><th>Phạm vi</th><th>Tài khoản</th><th>MFA</th></tr></thead>
+      <tbody>{{range .Staff}}<tr><td><span class="code">{{.EmployeeNo}}</span></td><td><strong>{{.FullName}}</strong></td><td>{{if .JobTitle}}{{.JobTitle}}{{else}}—{{end}}</td><td>{{.DepartmentCode}}<small>{{.DepartmentName}}</small></td><td>{{if .ReportTo}}{{.ReportTo}}{{else}}—{{end}}</td><td>{{if .Email}}{{.Email}}{{else}}—{{end}}</td><td class="mono">{{if .MobileNum}}{{.MobileNum}}{{else}}—{{end}}</td><td>{{if .Group}}{{.Group}}{{else}}—{{end}}</td><td>{{range .Roles}}<span class="tag tag-sky">{{.}}</span> {{end}}</td><td class="mono">{{.Scope}}</td><td>{{if .HasAccount}}{{if .MustChange}}<span class="tag tag-amber">PIN tạm</span>{{else}}<span class="tag tag-green">Đã đổi MK</span>{{end}}{{else}}<span class="tag tag-rose">Chưa có TK</span>{{end}}</td><td>{{if .HasAccount}}{{if .MFAEnrolled}}<span class="tag tag-green">Đã bật</span>{{else}}<span class="tag tag-amber">Chưa</span>{{end}}{{else}}—{{end}}</td></tr>{{end}}</tbody>
+    </table>
+  </div>
+  {{else}}<p class="empty">Chưa có nhân sự. Tải template CSV và import.</p>{{end}}
+</section>
+{{end}}
+{{template "foot" .}}{{end}}

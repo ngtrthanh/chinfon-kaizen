@@ -1,0 +1,68 @@
+{{define "print"}}<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{.Initiative.Code}} · Phụ lục 02</title><link rel="stylesheet" href="/static/app.css"></head>
+<body class="print-body">
+{{$i := .Initiative}}
+<div class="print-toolbar"><span>Phụ lục 02 — Phiếu thẩm định &amp; quyết định thưởng</span><button type="button" data-print>In / Lưu PDF (Ctrl+P)</button></div>
+<div class="print-sheet">
+  <header class="print-head">
+    <div><strong>CÔNG TY XI MĂNG CHINFON</strong><small>Hải Phòng · Hiệp Phước · Chi nhánh</small></div>
+    <div class="print-form">PN-B0000-02-E02</div>
+  </header>
+  <h1>PHIẾU THẨM ĐỊNH &amp; QUYẾT ĐỊNH THƯỞNG</h1>
+  <p class="print-sub">Theo Quy trình Xét khen thưởng PN-B0000-02 (2026)</p>
+
+  <table class="print-table">
+    <tr><th>Mã hồ sơ</th><td>{{$i.Code}}</td><th>Luồng</th><td>{{$i.TrackName}}</td></tr>
+    <tr><th>Đơn vị</th><td>{{$i.DepartmentName}}</td><th>Người nộp</th><td>{{$i.SubmitterName}} ({{$i.SubmitterEmployeeNo}}){{if eq $i.TrackCode "CONFIDENTIAL"}} · Luồng 3 bảo mật{{end}}</td></tr>
+    <tr><th>Thiết bị / địa điểm</th><td>{{if $i.EquipmentCode}}{{$i.EquipmentCode}}{{else}}—{{end}}</td><th>Trạng thái triển khai</th><td>{{$i.ImplementationStatusName}}</td></tr>
+    <tr><th>Bước hiện tại</th><td>{{$i.StageName}}</td><th>Ngày nộp</th><td>{{if $i.SubmittedAt.Valid}}{{date $i.SubmittedAt.String}}{{else}}—{{end}}</td></tr>
+  </table>
+
+  <h2>1. Hiện trạng</h2>
+  <p><b>{{$i.ProblemSummary}}</b></p>
+  <p class="pre">{{$i.ProblemDetail}}</p>
+  <h2>2. Giải pháp</h2>
+  <p><b>{{$i.SolutionSummary}}</b></p>
+  <p class="pre">{{$i.SolutionDetail}}</p>
+  <h2>3. Lợi ích</h2>
+  <p class="pre">{{$i.BenefitSummary}}</p>
+
+  <h2>4. Tính toán lợi ích ròng &amp; khung thưởng</h2>
+  <table class="print-table">
+    <tr><th>Tiết kiệm / tăng thu 12 tháng (A)</th><td class="right">{{money $i.GrossValueVND}}</td></tr>
+    <tr><th>Chi phí đầu tư &amp; lắp đặt (B)</th><td class="right">{{money $i.InvestCostVND}}</td></tr>
+    <tr><th>Lợi ích ròng (A − B)</th><td class="right"><b>{{money $i.NetBenefitVND}}</b></td></tr>
+    <tr><th>Hệ số Phụ lục 03</th><td class="right">{{if $i.Annex03}}1.2x{{else}}Không áp dụng{{end}}</td></tr>
+    <tr><th>Mức thưởng</th><td class="right">{{$i.RewardTierName}}</td></tr>
+    <tr><th>Số tiền thưởng</th><td class="right"><b>{{money $i.RewardAmountVND}}</b></td></tr>
+  </table>
+
+  <h2>5. Nhóm tác giả &amp; tỷ lệ chia thưởng</h2>
+  <table class="print-table">
+    <tr><th>Người nộp hồ sơ</th><td>{{$i.SubmitterName}} · {{$i.SubmitterEmployeeNo}}</td><td class="right">Phần còn lại</td></tr>
+    {{range .Participants}}<tr><th>{{.FullName}}</th><td>{{.EmployeeNo}} · {{.RoleNote}}</td><td class="right">{{.SharePercent}}%</td></tr>{{end}}
+  </table>
+
+  <h2>6. Biên bản thẩm định</h2>
+  {{if .Reviews}}
+  <table class="print-table">
+    <tr><th>Bước</th><th>Người thẩm định</th><th>Quyết định</th><th>Ý kiến</th><th>Thời điểm</th></tr>
+    {{range .Reviews}}<tr><td>{{.StageName}}</td><td>{{.ReviewerName}}</td><td>{{if eq .Decision "APPROVE"}}Đồng ý{{else if eq .Decision "REJECT"}}Từ chối{{else}}Cần bổ sung{{end}}</td><td>{{.Comment}}</td><td>{{dateTime .CreatedAt}}</td></tr>{{end}}
+  </table>
+  {{else}}<p>Chưa có biên bản.</p>{{end}}
+
+  <h2>7. Lịch sử trạng thái</h2>
+  <table class="print-table">
+    <tr><th>Hành động</th><th>Từ → đến</th><th>Người thực hiện</th><th>Ghi chú</th><th>Thời điểm</th></tr>
+    {{range .History}}<tr><td>{{.ActionCode}}</td><td>{{if .FromName}}{{.FromName}} → {{end}}{{.ToName}}</td><td>{{.ChangedName}}</td><td>{{.Note}}</td><td>{{dateTime .CreatedAt}}</td></tr>{{end}}
+  </table>
+
+  <div class="signature-grid">
+    <div><span>Người lập / HRD</span><i></i><small>Ký, ghi rõ họ tên</small></div>
+    <div><span>Hội đồng ĐGKT</span><i></i><small>Ký, ghi rõ họ tên</small></div>
+    <div><span>Tổng Giám đốc</span><i></i><small>Ký, ghi rõ họ tên</small></div>
+  </div>
+  <p class="print-foot">In từ Chinfon Kaizen 360° · {{$i.Code}} · Dữ liệu là nguồn sự thật duy nhất.</p>
+</div>
+<script src="/static/app.js" defer></script>
+</body></html>{{end}}

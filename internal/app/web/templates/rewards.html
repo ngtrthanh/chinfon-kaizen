@@ -1,0 +1,58 @@
+{{define "rewards"}}{{template "head" .}}{{template "sidebar" .}}{{template "topbar" .}}
+<section class="kpis three">
+  <article class="kpi"><div class="kpi-head"><span>Thưởng đã duyệt</span>{{icon "trophy"}}</div><p class="kpi-value">{{shortMoney .RewardTotals.ApprovedVND}}</p><p class="kpi-note">Toàn bộ hồ sơ trong phạm vi</p></article>
+  <article class="kpi"><div class="kpi-head"><span>Đã chi trả</span>{{icon "check"}}</div><p class="kpi-value ok-text">{{shortMoney .RewardTotals.PaidVND}}</p><p class="kpi-note">Đã chuyển sang bước APPLIED</p></article>
+  <article class="kpi"><div class="kpi-head"><span>Chờ chi trả</span>{{icon "clock"}}</div><p class="kpi-value">{{shortMoney .RewardTotals.PendingVND}}</p><p class="kpi-note">{{.RewardTotals.Headcount}} dòng người nhận</p></article>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <div><h2>Khung 7 mức thưởng — Mục 5.1 PN-B0000-02 (2026)</h2><p class="muted">Theo giá trị làm lợi ròng năm đầu · nhân 1.2x nếu thuộc Phụ lục 03 · trần 100.000.000 VNĐ</p></div>
+    <a class="btn btn-dark" href="/rewards/export.csv">{{icon "download"}} Xuất bảng lương HRD</a>
+  </div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Mức</th><th>Điều kiện lợi ích ròng</th><th class="num">Thưởng cơ sở</th><th>Ghi chú</th></tr></thead>
+      <tbody>
+      {{range .RewardTiers}}
+      <tr>
+        <td><span class="code">{{.Code}}</span><br><strong>{{.Name}}</strong></td>
+        <td>{{if .MinNetVND.Valid}}{{shortMoney .MinNetVND.Int64}} đến {{if .MaxNetVND.Valid}}{{shortMoney .MaxNetVND.Int64}}{{else}}không giới hạn{{end}}{{else}}≤ 0{{end}}</td>
+        <td class="num">{{if eq .Code "T7"}}6% Net{{else}}{{money .BaseAmountVND}}{{end}}</td>
+        <td class="wide">{{.RuleNote}}</td>
+      </tr>
+      {{end}}
+      </tbody>
+    </table>
+  </div>
+  <h3 class="subhead">Mục 5.2 — Thưởng phi tài chính (an toàn / sự cố)</h3>
+  <div class="nf-grid">
+    {{range .NonFinancial}}<div class="nf"><strong>{{.Name}}</strong><b>{{money .BaseAmountVND}}</b><small>{{.RuleNote}}</small></div>{{end}}
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-head"><div><h2>Sổ cái chi trả theo người nhận</h2><p class="muted">Tỷ lệ của đồng tác giả lấy từ hồ sơ; người nộp nhận phần còn lại. Chỉ hồ sơ đã có mức thưởng.</p></div></div>
+  {{if .RewardRows}}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Hồ sơ</th><th>Người nhận</th><th>Đơn vị</th><th class="num">Tỷ lệ</th><th class="num">Số tiền</th><th>Mức</th><th>Chi trả</th></tr></thead>
+      <tbody>
+      {{range .RewardRows}}
+      <tr>
+        <td><a class="code" href="/initiatives/{{.InitiativeID}}">{{.Code}}</a></td>
+        <td><strong>{{.EmployeeName}}</strong><small>{{.EmployeeNo}}</small></td>
+        <td>{{.DepartmentName}}</td>
+        <td class="num">{{.SharePercent}}%</td>
+        <td class="num"><strong>{{money .AmountVND}}</strong></td>
+        <td>{{.TierName}}</td>
+        <td>{{if .PaidAt.Valid}}<span class="tag tag-green">Đã chi {{date .PaidAt.String}}</span>{{else}}<span class="tag tag-amber">Chờ chi trả</span>{{end}}</td>
+      </tr>
+      {{end}}
+      </tbody>
+    </table>
+  </div>
+  {{else}}<p class="empty">Chưa có khoản thưởng nào được duyệt.</p>{{end}}
+  <p class="hint">Xuất CSV có BOM UTF-8 để mở trực tiếp bằng Excel; có chống CSV injection cho các trường văn bản. Mọi lần xuất đều ghi audit.</p>
+</section>
+{{template "foot" .}}{{end}}

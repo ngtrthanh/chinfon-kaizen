@@ -1,0 +1,36 @@
+{{define "initiatives"}}{{template "head" .}}{{template "sidebar" .}}{{template "topbar" .}}
+<section class="card">
+  <form class="filters" method="get" action="/initiatives">
+    <div class="field grow"><label>Tìm kiếm</label><input type="search" name="q" value="{{index .Filters "q"}}" placeholder="Mã, tiêu đề, người nộp, thiết bị"></div>
+    <div class="field"><label>Luồng</label><select name="track"><option value="">Tất cả luồng</option>{{range .Tracks}}<option value="{{.Code}}" {{if eq (index $.Filters "track") .Code}}selected{{end}}>{{.Name}}</option>{{end}}</select></div>
+    <div class="field"><label>Bước</label><select name="stage"><option value="">Tất cả bước</option>{{range .Stages}}<option value="{{.Code}}" {{if eq (index $.Filters "stage") .Code}}selected{{end}}>{{.Name}}</option>{{end}}</select></div>
+    <div class="field"><label>Trạng thái</label><select name="status"><option value="OPEN" {{if or (eq (index .Filters "status") "") (eq (index .Filters "status") "OPEN")}}selected{{end}}>Đang mở</option><option value="ALL" {{if eq (index .Filters "status") "ALL"}}selected{{end}}>Tất cả</option><option value="REJECTED" {{if eq (index .Filters "status") "REJECTED"}}selected{{end}}>Đã từ chối</option></select></div>
+    <div class="field"><label>&nbsp;</label><button class="btn btn-dark" type="submit">{{icon "search"}} Lọc</button></div>
+  </form>
+</section>
+
+<section class="card">
+  <div class="card-head"><div><h2>{{len .Initiatives}} hồ sơ</h2><p class="muted">Bấm vào hồ sơ để xem Phụ lục 02 và xử lý theo quyền.</p></div></div>
+  {{if .Initiatives}}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Hồ sơ</th><th>Nội dung</th><th>Đơn vị / người nộp</th><th>Luồng</th><th>Bước</th><th class="num">Net Benefit</th><th class="num">Thưởng</th><th>Hạn SLA</th></tr></thead>
+      <tbody>
+      {{range .Initiatives}}
+      <tr>
+        <td><a class="code" href="/initiatives/{{.ID}}">{{.Code}}</a>{{if eq .RecordStatus "REJECTED"}}<span class="tag tag-rose">Từ chối</span>{{end}}</td>
+        <td class="wide"><a href="/initiatives/{{.ID}}"><strong>{{.Title}}</strong></a><small>{{.ProblemSummary}}</small></td>
+        <td><span>{{.DepartmentName}}</span><small>{{.SubmitterName}}</small></td>
+        <td><span class="tag {{if eq .TrackCode "CONFIDENTIAL"}}tag-rose{{else if eq .TrackCode "FAST48"}}tag-amber{{else}}tag-sky{{end}}">{{if eq .TrackCode "CONFIDENTIAL"}}Mật{{else if eq .TrackCode "FAST48"}}48h{{else}}Chuẩn{{end}}</span></td>
+        <td><span class="stage stage-{{.StageCode}}">{{.StageName}}</span>{{if eq .ImplementationStatusCode "IMPLEMENTED"}}<small>Đã áp dụng</small>{{end}}</td>
+        <td class="num">{{shortMoney .NetBenefitVND}}</td>
+        <td class="num">{{shortMoney .RewardAmountVND}}</td>
+        <td>{{if .DueAt.Valid}}{{dateTime .DueAt.String}}{{else}}—{{end}}</td>
+      </tr>
+      {{end}}
+      </tbody>
+    </table>
+  </div>
+  {{else}}<p class="empty">Không có hồ sơ phù hợp bộ lọc.</p>{{end}}
+</section>
+{{template "foot" .}}{{end}}

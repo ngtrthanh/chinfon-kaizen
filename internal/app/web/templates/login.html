@@ -1,0 +1,32 @@
+{{define "login"}}<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>Đăng nhập · Chinfon Kaizen 360</title><link rel="stylesheet" href="/static/app.css"></head>
+<body class="auth-body">
+<div class="auth-shell">
+  <section class="auth-brand">
+    <div class="brand-mark large">CF</div>
+    <h1>Chinfon Kaizen 360°</h1>
+    <p>Quản lý sáng kiến &amp; khen thưởng theo <b>PN-B0000-02 (2026)</b>.</p>
+    <ul>
+      <li>⚡ 3 luồng tốc độ: 48h · tiêu chuẩn · bảo mật</li>
+      <li>🧮 Khung 7 mức thưởng &amp; hệ số 1.2x</li>
+      <li>🔐 RBAC + cô lập dữ liệu theo đơn vị</li>
+      <li>🧾 Audit log bất biến cho Luồng 3</li>
+    </ul>
+    <span class="auth-footnote">Hải Phòng · Hiệp Phước · Chi nhánh</span>
+  </section>
+  <section class="auth-card">
+    <h2>Đăng nhập nội bộ</h2>
+    <p class="muted">Dùng tài khoản do ADMIN cấp. Không có mật khẩu mặc định.</p>
+    {{if .Error}}<div class="flash error">{{icon "alert"}}<span>{{.Error}}</span></div>{{end}}
+    <form method="post" action="/login" class="form">
+      <input type="hidden" name="_csrf" value="{{.LoginCSRF}}">
+      <label>Tên đăng nhập<input name="username" autocomplete="username" required autofocus></label>
+      <label>Mật khẩu<input type="password" name="password" autocomplete="current-password" required></label>
+      <button class="btn btn-safety btn-block" type="submit">{{icon "lock"}} Đăng nhập</button>
+    </form>
+    <p class="auth-note">Quên mật khẩu: liên hệ ADMIN để cấp lại. Phiên đăng nhập hết hạn sau 12 giờ.</p>
+    <p class="auth-note"><b>Lần đầu sau khi import nhân sự:</b> đăng nhập bằng <code>emp_id</code> + <b>5 số cuối số điện thoại</b>, sau đó đổi mật khẩu.</p>
+    <p class="auth-note"><b>Bảo mật hai lớp:</b> sau mật khẩu, hệ thống yêu cầu mã 6 số từ ứng dụng xác thực. Lần đầu sẽ hướng dẫn quét QR.</p>
+  </section>
+</div>
+</body></html>{{end}}
