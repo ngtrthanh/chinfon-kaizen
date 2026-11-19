@@ -149,7 +149,8 @@
 
         {{if eq $i.StageCode "IMPLEMENT"}}
         <label>Trạng thái triển khai thực tế<select name="implementation_status">{{range .ImplementationStatuses}}<option value="{{.Code}}" {{if eq .Code $i.ImplementationStatusCode}}selected{{end}}>{{.Name}}</option>{{end}}</select></label>
-        <p class="hint">Xác nhận này đồng thời ghi nhận đã chi trả và chuyển hồ sơ sang bước Vinh danh.</p>
+        <label>Mã chứng từ đã chi trả (bắt buộc, 6–120 ký tự)<input name="payment_ref" required minlength="6" maxlength="120" placeholder="Mã biên bản/ủy nhiệm chi được HR xác nhận"></label>
+        <p class="hint">Chỉ xác nhận sau khi HR/Finance đã đối soát chứng từ chi trả ngoài hệ thống. App lưu mã chứng từ, không tự xác minh giao dịch ngân hàng.</p>
         {{end}}
 
         <label>Ý kiến thẩm định<textarea name="comment" rows="3" placeholder="Xác nhận số liệu SCADA/CEMS/trạm cân, điều kiện áp dụng…"></textarea></label>
