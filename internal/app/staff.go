@@ -352,11 +352,8 @@ func (a *App) applyStaffImport(rows []staffImportRow, resetPIN, hideDemo bool) (
 		err := tx.QueryRow(`SELECT id FROM app_user WHERE employee_no=?`, row.EmpID).Scan(&userID)
 		switch err {
 		case sql.ErrNoRows:
-			if row.Mobile == "" {
-				// Missing mobile: keep the employee, skip account/roles for now.
-				res.AccountsSkipped++
-				continue
-			}
+			// No phone or company email is required. First access uses a
+			// short-lived random invite issued by a verified administrator.
 			var conflict int
 			if err := tx.QueryRow(`SELECT COUNT(*) FROM app_user WHERE username=? COLLATE NOCASE`, row.EmpID).Scan(&conflict); err != nil {
 				return res, err
@@ -428,9 +425,7 @@ func (a *App) applyStaffImport(rows []staffImportRow, resetPIN, hideDemo bool) (
 	} else {
 		res.Notice = "Đã cập nhật nhân sự. Chế độ vận hành đang bật; dữ liệu demo vẫn bị ẩn."
 	}
-	if res.AccountsSkipped > 0 {
-		res.Notice += fmt.Sprintf(" %d nhân sự chưa tạo tài khoản vì thiếu mobile_num; bổ sung sau và import lại.", res.AccountsSkipped)
-	}
+	res.Notice += " Mọi nhân viên, kể cả không có email/SĐT, được tạo tài khoản PENDING và chỉ đăng nhập sau khi quản trị cấp mã mời ngẫu nhiên 30 phút."
 	return res, nil
 }
 
@@ -686,8 +681,8 @@ func (a *App) adminCouncilCreate(w http.ResponseWriter, r *http.Request, u *User
 		return
 	}
 	empNo := cleanCode(r.FormValue("employee_no"))
-	var mobile string
-	err := a.DB.QueryRow(`SELECT COALESCE(mobile_num,'') FROM md_employee WHERE employee_no=? AND active=1`, empNo).Scan(&mobile)
+	var active int
+	err := a.DB.QueryRow(`SELECT active FROM md_employee WHERE employee_no=? AND active=1`, empNo).Scan(&active)
 	if err != nil {
 		adminRedirect(w, r, "staff", "", "Không tìm thấy nhân viên hoạt động.")
 		return
@@ -701,10 +696,8 @@ func (a *App) adminCouncilCreate(w http.ResponseWriter, r *http.Request, u *User
 	var uid int64
 	err = tx.QueryRow(`SELECT id FROM app_user WHERE employee_no=?`, empNo).Scan(&uid)
 	if err == sql.ErrNoRows {
-		if last5Digits(mobile) == "" {
-			adminRedirect(w, r, "staff", "", "Nhân viên chưa có mobile_num; không thể tạo PIN khởi tạo.")
-			return
-		}
+		// Council members without personal phones can be provisioned too.
+		// CLI issue-invite must be used for their first login.
 		var conflict int
 		_ = tx.QueryRow(`SELECT COUNT(*) FROM app_user WHERE username=? COLLATE NOCASE`, empNo).Scan(&conflict)
 		if conflict > 0 {
