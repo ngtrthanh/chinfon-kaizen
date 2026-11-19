@@ -1,3 +1,5 @@
+> **P0 rollout update (2026-11-19):** Account creation does not depend on a private phone number. Staff without email or phone are PENDING until random invite issuance by an authorized administrator using `issue-invite`. Historic text below describing five-digit mobile PIN/required phone is superseded; no company-issued device or non-phone alternative second-factor method is implemented yet for people without an authenticator. Physical-assisted enrollment must be approved separately.
+
 # MFA (TOTP) — Chinfon Kaizen 360 v3
 
 MFA is mandatory for every account. It follows the `cem-auth` model: password
