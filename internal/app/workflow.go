@@ -16,6 +16,7 @@ type ReviewDecisionInput struct {
 	NonFinancialLevel    int
 	OverrideRewardVND    int64
 	ImplementationStatus string
+	PaymentReference string // External approved payroll/payment evidence; not proof the bank settled.
 }
 
 func nextStage(stage string) string {
@@ -43,6 +44,16 @@ func (a *App) applyStageReview(i *Initiative, actor string, in ReviewDecisionInp
 	to := nextStage(i.StageCode)
 	if to == "" {
 		return fmt.Errorf("hồ sơ không ở bước có thể xử lý")
+	}
+
+	// A workflow approval is not itself a disbursement. HR must record
+	// a traceable external payment document before stage APPLIED is entered.
+	if i.StageCode == StageImplement && in.Decision == "APPROVE" {
+		ref := strings.TrimSpace(in.PaymentReference)
+		if len(ref) < 6 || len(ref) > 120 || strings.ContainsAny(ref, "\\r\\n\\t") {
+			return fmt.Errorf("bắt buộc nhập mã chứng từ chi trả (6–120 ký tự) đã được HR đối chiếu")
+		}
+		in.PaymentReference = ref
 	}
 
 	tx, err := a.DB.Begin()
@@ -131,9 +142,9 @@ func (a *App) applyStageReview(i *Initiative, actor string, in ReviewDecisionInp
 		}
 		var res sql.Result
 		if i.StageCode == StageImplement {
-			res, err = tx.Exec(`UPDATE initiative SET stage_code=?,implementation_status_code=?,paid_at=?,paid_by=?,updated_at=?
+			res, err = tx.Exec(`UPDATE initiative SET stage_code=?,implementation_status_code=?,paid_at=?,paid_by=?,payment_reference=?,updated_at=?
 				WHERE id=? AND stage_code=? AND record_status='OPEN'`,
-				to, implStatus, now, actor, now, i.ID, i.StageCode)
+				to, implStatus, now, actor, in.PaymentReference, now, i.ID, i.StageCode)
 		} else {
 			res, err = tx.Exec(`UPDATE initiative SET stage_code=?,updated_at=? WHERE id=? AND stage_code=? AND record_status='OPEN'`,
 				to, now, i.ID, i.StageCode)
@@ -146,7 +157,10 @@ func (a *App) applyStageReview(i *Initiative, actor string, in ReviewDecisionInp
 			return fmt.Errorf("trạng thái hồ sơ đã thay đổi, vui lòng tải lại")
 		}
 		if _, err := tx.Exec(`INSERT INTO initiative_history(initiative_id,from_stage_code,to_stage_code,action_code,changed_by,note,created_at)
-			VALUES(?,?,?,?,?,?,?)`, i.ID, i.StageCode, to, action, actor, in.Comment, now); err != nil {
+			VALUES(?,?,?,?,?,?,?)`, i.ID, i.StageCode, to, action, actor, func() string {
+				if i.StageCode == StageImplement { return strings.TrimSpace(in.Comment) + " [payment_ref=" + in.PaymentReference + "]" }
+				return in.Comment
+			}(), now); err != nil {
 			return err
 		}
 	case "REJECT":
