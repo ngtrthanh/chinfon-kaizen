@@ -138,7 +138,7 @@ func TestParseStaffCSVMissingMobileAccepted(t *testing.T) {
 	}
 }
 
-func TestStaffImportWithoutMobileSkipsAccount(t *testing.T) {
+func TestStaffImportWithoutMobileProvisionsPendingAccount(t *testing.T) {
 	a := newTestApp(t, false)
 	mustAdmin(t, a)
 	csv := "emp_id,name,mobile_num,dept_code,dept_name\n" +
@@ -152,16 +152,24 @@ func TestStaffImportWithoutMobileSkipsAccount(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.EmployeesUpserted != 2 || res.UsersCreated != 0 || res.AccountsSkipped != 2 {
+	if res.EmployeesUpserted != 2 || res.UsersCreated != 2 || res.AccountsSkipped != 0 {
 		t.Fatalf("unexpected result: %+v", res)
 	}
 	var n int
 	_ = a.DB.QueryRow(`SELECT COUNT(*) FROM app_user WHERE employee_no='P81-0001'`).Scan(&n)
-	if n != 0 {
-		t.Fatalf("account should not exist without mobile, got %d", n)
+	if n != 1 {
+		t.Fatalf("pending account must exist without mobile, got %d", n)
+	}
+	var hash string
+	if err := a.DB.QueryRow(`SELECT password_hash FROM app_user WHERE employee_no='P81-0001'`).Scan(&hash); err != nil || hash != "pending" {
+		t.Fatalf("expected pending invite-only account, hash=%q err=%v", hash, err)
+	}
+	invite, err := a.IssueInvite("P81-0001")
+	if err != nil || len(invite) < 20 {
+		t.Fatalf("random invitation for no-phone worker failed: err=%v length=%d", err, len(invite))
 	}
 
-	// Adding the mobile later provisions the account on re-import.
+	// Updating the phone later must preserve existing account and identity.
 	rows, errs = parseStaffCSV([]byte("emp_id,name,mobile_num,dept_code\nP81-0001,Nguyễn Văn A,0912345678,P81\n"))
 	if len(errs) != 0 {
 		t.Fatalf("parse2: %#v", errs)
@@ -170,8 +178,8 @@ func TestStaffImportWithoutMobileSkipsAccount(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.UsersCreated != 1 || res.AccountsSkipped != 0 {
-		t.Fatalf("re-import should create account: %+v", res)
+	if res.UsersCreated != 0 || res.UsersUpdated != 1 || res.AccountsSkipped != 0 {
+		t.Fatalf("re-import must update, not duplicate, account: %+v", res)
 	}
 	_ = a.DB.QueryRow(`SELECT COUNT(*) FROM app_user WHERE employee_no='P81-0001'`).Scan(&n)
 	if n != 1 {
