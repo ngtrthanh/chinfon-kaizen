@@ -50,7 +50,7 @@ func (a *App) applyStageReview(i *Initiative, actor string, in ReviewDecisionInp
 	// a traceable external payment document before stage APPLIED is entered.
 	if i.StageCode == StageImplement && in.Decision == "APPROVE" {
 		ref := strings.TrimSpace(in.PaymentReference)
-		if len(ref) < 6 || len(ref) > 120 || strings.ContainsAny(ref, "\\r\\n\\t") {
+		if len(ref) < 6 || len(ref) > 120 || strings.ContainsAny(ref, "\r\n\t") {
 			return fmt.Errorf("bắt buộc nhập mã chứng từ chi trả (6–120 ký tự) đã được HR đối chiếu")
 		}
 		in.PaymentReference = ref
