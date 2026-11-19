@@ -34,8 +34,8 @@ def validate(data: bytes) -> tuple[list[dict[str, str]], list[str], dict]:
         rows = list(csv.DictReader(io.StringIO(decoded, newline="")))
     except csv.Error:
         return [], ["CSV parsing error"], {"sha256": digest}
-    if not rows and not decoded.strip():
-        return [], ["Empty CSV"], {"sha256": digest}
+    if not rows:
+        return [], ["Empty CSV; at least one HR-approved record is required"], {"sha256": digest}
     reader = csv.DictReader(io.StringIO(decoded, newline=""))
     columns = reader.fieldnames or []
     if len(set(columns)) != len(columns):
