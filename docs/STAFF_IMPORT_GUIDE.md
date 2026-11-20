@@ -1,3 +1,5 @@
+> **P0 update — 2026-11-19:** Workers without email or personal phone are now provisioned as PENDING local accounts on import. A verified server administrator must issue `kaizen issue-invite <emp_id>` (random, 30-minute, one use), delivered individually and privately. The old text below about skipping no-mobile accounts is superseded. This does not substitute for a formally verified employee roster and sign-off. No PIN derived from phone or DOB is accepted.
+
 > **Security update (17 Nov 2026):** Sections describing the five-digit mobile PIN reflect previous releases and are superseded. Only random, expiring invitations are accepted. 
 
 # Staff import guide — P81 / 1,000 employees

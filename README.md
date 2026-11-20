@@ -1,3 +1,5 @@
+> **P0 rollout update — 2026-11-19:** In branch `feature/p0-invite-without-phone-20261119`, personnel can be provisioned without personal mobile/email. First login remains locked until a verified administrator issues a random, expiring `kaizen issue-invite <emp_id>`. Earlier statements requiring `mobile_num` or using five digits of a phone number are obsolete in this branch. Independent security and HR production gates remain open.
+
 > **Security notice — ASVS 5.0 L2 pilot:** Old instructions mentioning mobile-derived initial PINs are superseded. Use `issue-invite` and verify all security gates before production. 
 
 # Chinfon Kaizen 360° — v3

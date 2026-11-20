@@ -112,6 +112,7 @@ func (a *App) initiativeReviewPost(w http.ResponseWriter, r *http.Request, u *Us
 			return
 		}
 		in.ImplementationStatus = impl
+		in.PaymentReference = strings.TrimSpace(r.FormValue("payment_ref"))
 	}
 
 	if err := a.applyStageReview(i, u.EmployeeNo, in); err != nil {

@@ -27,6 +27,8 @@ jobs:
         run: |
           go vet ./...
           go build ./cmd/kaizen
+      - name: HR source preflight regression (no PII)
+        run: python3 -m unittest discover -s tools -p 'test_p0_hr_preflight.py'
       - name: ASVS L2 baseline integrity
         run: |
           python3 tools/asvs_report.py
