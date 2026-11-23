@@ -33,6 +33,7 @@ class PackageGoTests(unittest.TestCase):
         self.assertTrue(manifest["binary"]["filename"].endswith(".exe"))
         self.assertFalse(manifest["git_dirty"])
         folder = zip_path.with_suffix("")
+        self.assertNotIn(b"\r\n", (folder / "SHA256SUMS").read_bytes())
         exe = folder / "fixture.exe"
         exe.write_bytes(exe.read_bytes() + b"corruption")
         with self.assertRaises(ValueError):
