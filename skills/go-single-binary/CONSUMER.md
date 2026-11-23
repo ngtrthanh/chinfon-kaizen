@@ -1,7 +1,7 @@
 # Kaizen consumer adapter for go-single-binary
 
 Canonical source: `ngtrthanh/jf/harness/skills/go-single-binary/` (private).
-Pinned JF source commit: `063ed99c4d8c4dbd9ff4a90bc0f31595b0fc08c7`.
+Pinned JF source commit: `20124f18387514e19593e2eb7ad85a9720c53674`.
 Local snapshot: `skills/go-single-binary/` in this repository.
 Origin of reusable build recipe: `build-win.ps1` Git blob `d0d9305ca4c5c28910ea36db9a98356644df4fe1`.
 
