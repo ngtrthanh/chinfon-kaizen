@@ -166,7 +166,7 @@ def build(args) -> dict:
         manifest_bytes = (json.dumps(manifest, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
         (tmp_dir / "manifest.json").write_bytes(manifest_bytes)
         sums = f"{sha(binary)}  {exe_name}\n{sha(manifest_bytes)}  manifest.json\n"
-        (tmp_dir / "SHA256SUMS").write_text(sums, encoding="utf-8")
+        (tmp_dir / "SHA256SUMS").write_bytes(sums.encode("utf-8"))
         verify_release(tmp_dir)
         dest.mkdir()
         for filename in (exe_name, "manifest.json", "SHA256SUMS"):
