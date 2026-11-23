@@ -13,6 +13,14 @@ v3 là một ứng dụng Go **single binary**, không Node.js, không build fro
 
 > **ASVS 5.0 L2 implementation in progress:** see [security/asvs/README.md](security/asvs/README.md). This branch is NOT an ASVS-compliant release. Phone-derived PIN bootstrap is disabled; use `kaizen issue-invite <username>` from the server console after importing staff. The token expires in 30 minutes. Existing pending accounts require provisioning. Internet/LAN access requires an HTTPS reverse proxy and secure cookies. Old `start-lan.cmd` direct HTTP access is disabled.
 
+## Skill đóng gói Go binary dùng chung
+
+- Skill độc lập: [`skills/go-single-binary/SKILL.md`](skills/go-single-binary/SKILL.md).
+- Nguồn chuẩn private: `ngtrthanh/jf/harness/skills/go-single-binary/`; bản consumer được pin theo commit trong [`CONSUMER.md`](skills/go-single-binary/CONSUMER.md).
+- Local build không thay đổi: `build-win.ps1` tạo `bin/kaizen.exe`.
+- Release build: `./build-release.ps1 -Version 0.3.0` tạo ZIP, manifest và SHA-256 trong `dist/`; cần Python 3.10+, Go theo `go.mod` và cây Git sạch.
+- Skill không bao gồm runtime database, credentials, uploads, system service, code signing hoặc triển khai production. Nghiệm thu Kaizen là quy trình riêng.
+
 ## 1. Chạy nhanh trên Windows
 
 ```powershell

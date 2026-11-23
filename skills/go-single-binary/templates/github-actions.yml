@@ -1,0 +1,44 @@
+# Copy into a consumer repository's .github/workflows/package-go.yml.
+# Template: update the main package and skill path; no deployment is performed.
+name: Package Go single binary
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version (letters/digits/dot/dash/underscore)
+        required: true
+        type: string
+      main_package:
+        description: Go main package (e.g. ./cmd/app)
+        required: true
+        default: ./cmd/app
+        type: string
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest # Pure-Go cross compilation; for Windows CGO use a reviewed Windows runner
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Offline skill unit tests
+        run: python3 -m unittest discover -s skills/go-single-binary/tests -v
+      - name: Build release (requires committed clean source)
+        env:
+          BUILD_VERSION: ${{ inputs.version }}
+          MAIN_PACKAGE: ${{ inputs.main_package }}
+        run: |
+          python3 skills/go-single-binary/scripts/package_go.py build \
+            --project-root . --package "$MAIN_PACKAGE" --name myapp \
+            --version "$BUILD_VERSION" --target windows/amd64 --cgo 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: go-single-binary-${{ inputs.version }}
+          path: dist/*.zip
+          if-no-files-found: error
